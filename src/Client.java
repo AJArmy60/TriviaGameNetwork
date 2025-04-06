@@ -30,7 +30,9 @@ public class Client
 
     public static void main(String[] args)
     {
-        try (Socket socket = new Socket("10.111.135.231", 1000))
+        loadClientConfig("config/clientConfig.txt");
+
+        try (Socket socket = new Socket(SERVER_IPS.get(0), SERVER_PORT))
         {
             //Create input and output streams for communication with the server
             BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
