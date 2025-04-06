@@ -48,7 +48,7 @@ public class ClientWindow implements ActionListener {
 
         timer = new JLabel("TIMER");
         timer.setBounds(250, 250, 100, 20);
-        clock = new TimerCode(30);
+        clock = new TimerCode(30, this);  // Pass `this` (ClientWindow) as the reference
         Timer t = new Timer();
         t.schedule(clock, 0, 1000);
         window.add(timer);
@@ -81,45 +81,47 @@ public class ClientWindow implements ActionListener {
 
     // This method is called when you check/uncheck any radio button or press submit/poll
     @Override
-    public void actionPerformed(ActionEvent e) {
-        System.out.println("You clicked " + e.getActionCommand());
+public void actionPerformed(ActionEvent e) {
+    System.out.println("You clicked " + e.getActionCommand());
 
-        String input = e.getActionCommand();
-        switch (input) {
-            case "Option 1":
-            case "Option 2":
-            case "Option 3":
-            case "Option 4":
-                // Here you can add any specific logic for when an option is clicked
-                break;
-            case "Poll":
-                // Handle polling logic (e.g., show a prompt or handle events)
-                break;
-            case "Submit":
-                // Check if the selected answer is correct and update score
-                handleAnswerSubmission();
-                break;
-            default:
-                System.out.println("Incorrect Option");
-        }
-
-        // Test code below to demo enable/disable components
-        if (poll.isEnabled()) {
-            poll.setEnabled(false);
-            submit.setEnabled(true);
-        } else {
-            poll.setEnabled(true);
-            submit.setEnabled(false);
-        }
-
-        // Move to the next question after each submission
-        if (currentQuestionIndex < questions.size() - 1) {
-            currentQuestionIndex++;
-            showQuestion(currentQuestionIndex);
-        } else {
-            JOptionPane.showMessageDialog(window, "You have finished the quiz! Final Score: " + scoreCount);
-        }
+    String input = e.getActionCommand();
+    switch (input) {
+        case "Paris":
+        case "Blue":
+        case "Biden":
+        case "Green":
+            // Here you can add any specific logic for when an option is clicked
+            break;
+        case "Poll":
+            // Handle polling logic (e.g., show a prompt or handle events)
+            break;
+        case "Submit":
+            // Check if the selected answer is correct and update score
+            handleAnswerSubmission();
+            break;
+        default:
+            System.out.println("Incorrect Option");
     }
+
+    // Test code below to demo enable/disable components
+    if (poll.isEnabled()) {
+        poll.setEnabled(false);
+        submit.setEnabled(true);
+    } else {
+        poll.setEnabled(true);
+        submit.setEnabled(false);
+    }
+
+    // Check if timer has reached zero, and move to the next question if there are more
+    if (currentQuestionIndex < questions.size()) {
+        if (((ClientWindow.TimerCode) clock).getDuration() <= 0) {  // Access duration through clock
+            moveToNextQuestion();
+        }
+    } else {
+        JOptionPane.showMessageDialog(window, "Game Over! Final Score: " + scoreCount);
+    }
+}
+
 
     // Show the question at the given index
     private void showQuestion(int index) {
@@ -130,7 +132,7 @@ public class ClientWindow implements ActionListener {
             options[i].setEnabled(true);  // Re-enable all options for the new question
         }
         timer.setText("30");
-        clock = new TimerCode(30);
+        clock = new TimerCode(30, this);  // Pass `this` (ClientWindow) as the reference
         Timer t = new Timer();
         t.schedule(clock, 0, 1000);
     }
@@ -151,7 +153,7 @@ public class ClientWindow implements ActionListener {
     // Load questions from a file
     private void loadQuestions(String filePath) {
         questions = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader("questions.txt"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
@@ -167,33 +169,64 @@ public class ClientWindow implements ActionListener {
         }
     }
 
-    // Timer class to handle the countdown
-    public class TimerCode extends TimerTask {
-        private int duration;
-
-        public TimerCode(int duration) {
-            this.duration = duration;
+    // Move to the next question after the current one
+    private void moveToNextQuestion() {
+        // Disable all options and reset the timer
+        for (JRadioButton option : options) {
+            option.setEnabled(false);
         }
-
-        @Override
-        public void run() {
-            if (duration < 0) {
-                timer.setText("Time's up!");
-                window.repaint();
-                this.cancel();
-                return;
-            }
-
-            if (duration < 6)
-                timer.setForeground(Color.red);
-            else
-                timer.setForeground(Color.black);
-
-            timer.setText(duration + "");
-            duration--;
-            window.repaint();
+        
+        // Move to the next question, or finish the game if no more questions
+        if (currentQuestionIndex < questions.size() - 1) {
+            currentQuestionIndex++;
+            showQuestion(currentQuestionIndex);  // Show the next question
+        } else {
+            JOptionPane.showMessageDialog(window, "Game Over! Final Score: " + scoreCount);
+            window.dispose();  // Close the game window after finishing the quiz
         }
     }
+
+    // Timer class to handle the countdown
+    public class TimerCode extends TimerTask {
+		private int duration;
+		private ClientWindow clientWindow;  // Reference to ClientWindow
+	
+		// Constructor to initialize duration and the ClientWindow reference
+		public TimerCode(int duration, ClientWindow clientWindow) {
+			this.duration = duration;
+			this.clientWindow = clientWindow;
+		}
+	
+		@Override
+		public void run() {
+			if (duration <= 0) {
+				clientWindow.moveToNextQuestion();  // Move to next question when time is up
+				this.cancel();  // Stop the timer
+				return;
+			}
+	
+			// Change timer color as time runs out
+			if (duration < 6)
+				clientWindow.timer.setForeground(Color.red);
+			else
+				clientWindow.timer.setForeground(Color.black);
+	
+			clientWindow.timer.setText(duration + "");
+			duration--;  // Decrease the timer
+			clientWindow.window.repaint();
+		}
+	
+		// Getter for the duration so it can be accessed in the ClientWindow
+		public int getDuration() {
+			return duration;
+		}
+	
+		// Setter for the duration (if needed)
+		public void setDuration(int duration) {
+			this.duration = duration;
+		}
+	}
+	
 
     // Question class to hold question, options, and the correct answer
     public class Question {
