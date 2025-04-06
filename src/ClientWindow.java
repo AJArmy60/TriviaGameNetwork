@@ -12,6 +12,7 @@ import java.util.TimerTask;
 import javax.swing.*;
 
 public class ClientWindow implements ActionListener {
+	private Client client;
     private JButton poll;
     private JButton submit;
     private JRadioButton options[];
@@ -88,6 +89,7 @@ public class ClientWindow implements ActionListener {
                 poll.setEnabled(false);  // Disable Poll button
                 submit.setEnabled(true);  // Enable Submit button
                 enableOptions(true);  // Enable options after Poll is clicked
+				client.sendUDP(); //send UDP packet to server
                 break;
             case "Submit":
                 handleAnswerSubmission();  // Check if the selected answer is correct and update score

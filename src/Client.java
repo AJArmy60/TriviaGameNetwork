@@ -62,7 +62,7 @@ public class Client
     }
     
     //sends a UDP packet ping to the server
-    public static void sendUDP() {
+    public void sendUDP() {
         try {
             DatagramSocket socket = new DatagramSocket();
             long threadId = Thread.currentThread().getId(); // Get the current thread's ID
