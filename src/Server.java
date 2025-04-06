@@ -3,10 +3,13 @@ import java.net.*;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Server {
 
-    private static int TCP_PORT; 
+    private static int TCP_PORT;
+    private static int UDP_PORT;
+    private static ConcurrentLinkedQueue<String> udpMessageQueue = new ConcurrentLinkedQueue<>();
     private static ConcurrentHashMap<String, ClientHandler> connectedClients = new ConcurrentHashMap<>(); //keeps track of clients
     public boolean gameState;
     public static void main(String[] args) {
@@ -31,6 +34,82 @@ public class Server {
             // Handle unexpected errors
             System.err.println("Unexpected error: " + e.getMessage());
         }
+    }
+
+    public static void acceptUDPMessage() {
+        // UDP message acceptance
+        try (DatagramSocket socket = new DatagramSocket(UDP_PORT)) {
+            System.out.println("Listening for UDP messages on port " + UDP_PORT);
+            while (true) {
+                byte[] buffer = new byte[1024];
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                socket.receive(packet); // Receive the UDP packet
+    
+                // Extract the message from the packet
+                String message = new String(packet.getData(), 0, packet.getLength());
+                System.out.println("Received UDP message: " + message);
+    
+                // Parse the message (expected format: "buzz:<ClientID>:<QuestionNumber>")
+                String[] parts = message.split(":");
+                if (parts.length == 3 && parts[0].equals("buzz")) {
+                    String clientID = parts[1];
+                    int questionNumber = Integer.parseInt(parts[2]);
+    
+                    // Add the message to the queue
+                    udpMessageQueue.add(clientID + ":" + questionNumber);
+                    System.out.println("Added to queue: ClientID=" + clientID + ", QuestionNumber=" + questionNumber);
+                } else {
+                    System.err.println("Invalid UDP message format: " + message);
+                }
+            }
+        } catch (IOException e) {
+            // Handle errors related to UDP communication
+            System.err.println("Error receiving UDP message: " + e.getMessage());
+        }
+    }
+
+    public static class UDPThread implements Runnable {
+        @Override
+        public void run() {
+            while (true) {
+                // Peek at the first message in the queue without removing it
+                String message = udpMessageQueue.poll();
+                String clientID = getClientID(message);
+                ClientHandler clientHandler = connectedClients.get(clientID);
+                if (clientHandler != null) {
+                    clientHandler.sendMessage("ack");
+                    System.out.println("Sent 'ack' to ClientID=" + clientID);
+                }
+
+                //sends negative ack to other clients in queue
+                while(!udpMessageQueue.isEmpty()){
+                    message = udpMessageQueue.poll();
+                    clientID = getClientID(message);
+                    clientHandler = connectedClients.get(clientID);
+                    if (clientHandler != null) {
+                        clientHandler.sendMessage("negative-ack");
+                        System.out.println("Sent 'negative-ack' to ClientID=" + clientID);
+                    }
+                }
+    
+                // Sleep briefly to avoid busy-waiting
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    System.err.println("UDPThread interrupted: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    public static String getClientID(String message){
+        if (message != null) {
+            String[] parts = message.split(":");
+            String clientID = parts[0]; // Extract the clientID
+            int questionNumber = Integer.parseInt(parts[1]); // Extract the question number
+            return clientID;
+        }
+        return "Failed to parse message";
     }
 
     // Load server configuration from the provided file path
