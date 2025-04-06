@@ -162,21 +162,23 @@ public class ClientWindow implements ActionListener {
     }
 
     // Move to the next question after the current one
-    private void moveToNextQuestion() {
-        // Disable all options and reset the timer
-        for (JRadioButton option : options) {
-            option.setEnabled(false);
-        }
+	private void moveToNextQuestion() {
+		// Disable all options and reset the timer
+		for (JRadioButton option : options) {
+			option.setEnabled(false);
+		}
 
-        // Move to the next question, or finish the game if no more questions
-        if (currentQuestionIndex < questions.size() - 1) {
-            currentQuestionIndex++;  // Increment question index properly
-            showQuestion(currentQuestionIndex);  // Show the next question
-        } else {
-            JOptionPane.showMessageDialog(window, "Game Over! Final Score: " + scoreCount);
-            window.dispose();  // Close the game window after finishing the quiz
-        }
-    }
+		// Move to the next question, or finish the game if no more questions
+		if (currentQuestionIndex < questions.size() - 1) {
+			currentQuestionIndex++;  // Increment question index properly
+			showQuestion(currentQuestionIndex);  // Show the next question
+		} else {
+			JOptionPane.showMessageDialog(window, "Game Over! Final Score: " + scoreCount);
+			window.dispose();  // Close the game window after finishing the quiz
+			System.exit(0);  // Exit the program after game over
+		}
+	}
+
 
     // Timer class to handle the countdown
     public class TimerCode extends TimerTask {
