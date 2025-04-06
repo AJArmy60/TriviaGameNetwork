@@ -1,6 +1,5 @@
 import java.io.*;
 import java.net.*;
-import java.nio.file.*;
 import java.security.SecureRandom;
 import java.util.*;
 
@@ -31,6 +30,8 @@ public class Client
     public static void main(String[] args)
     {
         loadClientConfig("config/clientConfig.txt");
+
+        ClientWindow window = new ClientWindow();
 
         try (Socket socket = new Socket(SERVER_IPS.get(0), SERVER_PORT))
         {
