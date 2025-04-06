@@ -7,11 +7,9 @@ import java.util.*;
 public class Client 
 {
     private static final SecureRandom secureRandom = new SecureRandom();
-    private static final int NODE_ID = secureRandom.nextInt(1000);
     private static List<String> SERVER_IPS;
     private static int SERVER_PORT;
     private static String DIRECTORY_PATH;
-    private static int versionCounter = 1;
 
     private static void loadClientConfig(String filePath) {
         try {
@@ -60,6 +58,25 @@ public class Client
         catch (IOException e)
         {
             System.err.println("Client error: " + e.getMessage());
+        }
+    }
+    
+    //sends a UDP packet ping to the server
+    public static void sendUDP() {
+        try {
+            DatagramSocket socket = new DatagramSocket();
+            long threadId = Thread.currentThread().getId(); // Get the current thread's ID
+            String message = "Thread ID: " + threadId; // Create a message with the thread ID
+            byte[] buffer = message.getBytes(); // Convert the message to bytes
+    
+            InetAddress address = InetAddress.getByName(SERVER_IPS.get(0));
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, SERVER_PORT);
+            socket.send(packet); // Send the packet
+    
+            System.out.println("UDP packet sent to " + SERVER_IPS.get(0) + ":" + SERVER_PORT + " with message: " + message);
+            socket.close();
+        } catch (IOException e) {
+            System.err.println("Error sending UDP packet: " + e.getMessage());
         }
     }
 }
