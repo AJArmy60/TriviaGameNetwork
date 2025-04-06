@@ -8,7 +8,7 @@ public class Server {
     public static void main(String[] args) {
 
         //establish connection, port #, max connections, IP addresses
-        try (ServerSocket serverSocket = new ServerSocket(TCP_PORT, 15, InetAddress.getByName("0.0.0.0"))) {
+        try (ServerSocket serverSocket = new ServerSocket(1000, 15, InetAddress.getByName("0.0.0.0"))) {
             loadServerConfig("config/serverConfig.txt");
             System.out.println("Server started. Waiting for a client...");
             while(true){
@@ -30,10 +30,10 @@ public class Server {
     }
 
     // Load server configuration from the provided file path
-    private static void loadServerConfig(String filePath) {
+    private static void loadServerConfig(String serverConfigPath) {
         try {
             Properties props = new Properties();
-            props.load(new FileInputStream(filePath));
+            props.load(new FileInputStream(serverConfigPath));
             TCP_PORT = Integer.parseInt(props.getProperty("port"));
             System.out.println("Loaded server configuration: PORT=" + TCP_PORT);
         } catch (IOException | NumberFormatException e) {
