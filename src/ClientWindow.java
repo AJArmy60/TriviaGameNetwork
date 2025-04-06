@@ -48,7 +48,6 @@ public class ClientWindow implements ActionListener {
 
         timer = new JLabel("TIMER");
         timer.setBounds(250, 250, 100, 20);
-        // Initially, we will not have a global timer running, but this will be set for each question
         window.add(timer);
 
         score = new JLabel("SCORE: 0");
@@ -84,30 +83,17 @@ public class ClientWindow implements ActionListener {
     
         String input = e.getActionCommand();
         switch (input) {
-            case "Paris":
-            case "Blue":
-            case "Biden":
-            case "Green":
-                // Here you can add any specific logic for when an option is clicked
-                break;
             case "Poll":
-                // Handle polling logic (e.g., show a prompt or handle events)
+                poll.setEnabled(false);  // Disable Poll button
+                submit.setEnabled(true);  // Enable Submit button
                 break;
             case "Submit":
-                // Check if the selected answer is correct and update score
-                handleAnswerSubmission();
+                handleAnswerSubmission();  // Check if the selected answer is correct and update score
+                poll.setEnabled(false);  // Disable Poll button after Submit
+                submit.setEnabled(false);  // Disable Submit button after submission
                 break;
             default:
-                System.out.println("Incorrect Option");
-        }
-    
-        // Test code below to demo enable/disable components
-        if (poll.isEnabled()) {
-            poll.setEnabled(false);
-            submit.setEnabled(true);
-        } else {
-            poll.setEnabled(true);
-            submit.setEnabled(false);
+                break;
         }
     }
 
@@ -119,6 +105,11 @@ public class ClientWindow implements ActionListener {
             options[i].setText(currentQuestion.getOptions()[i]);
             options[i].setEnabled(true);  // Re-enable all options for the new question
         }
+
+        // Reset the Poll and Submit buttons
+        poll.setEnabled(true);
+        submit.setEnabled(false);
+
         // Set the timer to 10 seconds for this question
         timer.setText("10");
         clock = new TimerCode(10, this);  // Pass `this` (ClientWindow) as the reference
