@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class Server {
 
     private static int TCP_PORT;
-    private static int UDP_PORT;
+    private static int UDP_PORT = 2000; //port for UDP
     private static ConcurrentLinkedQueue<String> udpMessageQueue = new ConcurrentLinkedQueue<>();
     private static ConcurrentHashMap<String, ClientHandler> connectedClients = new ConcurrentHashMap<>(); //keeps track of clients
     public boolean gameState;

@@ -71,10 +71,10 @@ public class Client
             byte[] buffer = message.getBytes(); // Convert the message to bytes
     
             InetAddress address = InetAddress.getByName(SERVER_IPS.get(0));
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, SERVER_PORT);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, 2000);
             socket.send(packet); // Send the packet
     
-            System.out.println("UDP packet sent to " + SERVER_IPS.get(0) + ":" + SERVER_PORT + " with message: " + message);
+            System.out.println("UDP packet sent to " + SERVER_IPS.get(0) + ":" + 2000 + " with message: " + message);
             socket.close();
         } catch (IOException e) {
             System.err.println("Error sending UDP packet: " + e.getMessage());
