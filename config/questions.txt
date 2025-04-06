@@ -1,8 +1,0 @@
-Is a the correct answer?a,b,c,d
-answer=0
-Is b the correct answer?a,b,c,d
-answer=1
-Is c the correct answer?a,b,c,d
-answer=2
-Is d the correct answer?a,b,c,d
-answer=3
