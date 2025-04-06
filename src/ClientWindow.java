@@ -44,6 +44,7 @@ public class ClientWindow implements ActionListener {
             options[index].setBounds(10, 110 + (index * 20), 350, 20);
             window.add(options[index]);
             optionGroup.add(options[index]);
+            options[index].setEnabled(false);  // Disable options initially
         }
 
         timer = new JLabel("TIMER");
@@ -86,11 +87,13 @@ public class ClientWindow implements ActionListener {
             case "Poll":
                 poll.setEnabled(false);  // Disable Poll button
                 submit.setEnabled(true);  // Enable Submit button
+                enableOptions(true);  // Enable options after Poll is clicked
                 break;
             case "Submit":
                 handleAnswerSubmission();  // Check if the selected answer is correct and update score
                 poll.setEnabled(false);  // Disable Poll button after Submit
                 submit.setEnabled(false);  // Disable Submit button after submission
+                enableOptions(false);  // Disable options after Submit
                 break;
             default:
                 break;
@@ -103,7 +106,7 @@ public class ClientWindow implements ActionListener {
         question.setText("Q" + (index + 1) + ". " + currentQuestion.getQuestion());
         for (int i = 0; i < options.length; i++) {
             options[i].setText(currentQuestion.getOptions()[i]);
-            options[i].setEnabled(true);  // Re-enable all options for the new question
+            options[i].setEnabled(false);  // Disable options at the start of the question
         }
 
         // Reset the Poll and Submit buttons
@@ -127,6 +130,13 @@ public class ClientWindow implements ActionListener {
                     break;
                 }
             }
+        }
+    }
+
+    // Enable or disable the options based on the argument
+    private void enableOptions(boolean enable) {
+        for (int i = 0; i < options.length; i++) {
+            options[i].setEnabled(enable);
         }
     }
 
