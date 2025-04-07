@@ -246,7 +246,6 @@ public class ClientWindow implements ActionListener {
         }
     }
 
-    // The onAckReceived function remains unchanged
     public void onAckReceived(Boolean ack) {
         if (ack) {
             submit.setEnabled(true);
