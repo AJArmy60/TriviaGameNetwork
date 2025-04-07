@@ -63,8 +63,9 @@ public class Client {
     public void sendUDP() {
         try {
             DatagramSocket udpSocket = new DatagramSocket();
-            long threadId = Thread.currentThread().getId(); // Get the current thread's ID
-            String message = "Thread ID: " + threadId; // Create a message with the thread ID
+            String clientID = InetAddress.getLocalHost().getHostName(); // Use hostname as ClientID
+            int questionNumber = clientWindow.getCurrentQuestionIndex(); // Get the current question index
+            String message = "buzz:" + clientID + ":" + questionNumber; // Format the message
             byte[] buffer = message.getBytes();
 
             InetAddress serverAddress = InetAddress.getByName(SERVER_IPS.get(0));

@@ -50,19 +50,22 @@ public class Server {
                 socket.receive(packet); // Receive the UDP packet
 
                 // Extract the message from the packet
-                String message = new String(packet.getData(), 0, packet.getLength());
+                String message = new String(packet.getData(), 0, packet.getLength()).trim();
                 System.out.println("Received UDP message: " + message);
 
                 // Parse the message (expected format: "buzz:<ClientID>:<QuestionNumber>")
                 String[] parts = message.split(":");
-                if (parts.length == 3 && parts[0].equals("buzz")) {
-                    String clientID = parts[1];
-                    int questionNumber = Integer.parseInt(parts[2]);
+                if (parts.length == 3 && "buzz".equals(parts[0])) {
+                    try {
+                        String clientID = parts[1].trim();
+                        int questionNumber = Integer.parseInt(parts[2].trim());
 
-                    // Add the message to the queue
-                    udpMessageQueue.add(clientID + ":" + questionNumber);
-                    System.out
-                            .println("Added to queue: ClientID=" + clientID + ", for QuestionNumber=" + questionNumber);
+                        // Add the message to the queue
+                        udpMessageQueue.add(clientID + ":" + questionNumber);
+                        System.out.println("Added to queue: ClientID=" + clientID + ", for QuestionNumber=" + questionNumber);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Invalid question number format in message: " + message);
+                    }
                 } else {
                     System.err.println("Invalid UDP message format: " + message);
                 }

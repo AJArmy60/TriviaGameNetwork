@@ -221,6 +221,10 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+	public int getCurrentQuestionIndex(){
+		return currentQuestionIndex;
+	}
+
     // Question class to hold question, options, and the correct answer
     public class Question {
         private String question;
