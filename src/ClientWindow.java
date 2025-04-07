@@ -11,7 +11,7 @@ import java.util.TimerTask;
 import javax.swing.*;
 
 public class ClientWindow implements ActionListener {
-	private Client client;
+    private Client client;
     private JButton poll;
     private JButton submit;
     private JRadioButton options[];
@@ -25,9 +25,10 @@ public class ClientWindow implements ActionListener {
     private List<Question> questions;  // To hold questions and their options
     private int currentQuestionIndex = 0;  // Track the current question
     private int scoreCount = 0;  // Track the score
+    private boolean answered = false;  // Flag to track if an answer has been submitted
     
     public ClientWindow() {
-        JOptionPane.showMessageDialog(window, "This is a trivia game");
+        // Setup the GUI...
         
         window = new JFrame("Trivia");
         question = new JLabel("Q1. This is a sample question");
@@ -86,7 +87,7 @@ public class ClientWindow implements ActionListener {
                 poll.setEnabled(false);  // Disable Poll button
                 submit.setEnabled(true);  // Enable Submit button
                 enableOptions(true);  // Enable options after Poll is clicked
-				client.sendUDP(); //send UDP packet to server
+                client.sendUDP(); //send UDP packet to server
                 break;
             case "Submit":
                 handleAnswerSubmission();  // Check if the selected answer is correct and update score
@@ -117,17 +118,25 @@ public class ClientWindow implements ActionListener {
         clock = new TimerCode(10, this);  // Pass `this` (ClientWindow) as the reference
         Timer t = new Timer();
         t.schedule(clock, 0, 1000);  // Schedule the timer to run every second
+        
+        // Reset the answered flag
+        answered = false;
     }
 
     // Handle the submission of an answer
     private void handleAnswerSubmission() {
         for (int i = 0; i < options.length; i++) {
             if (options[i].isSelected()) {
+                answered = true;  // Mark the question as answered
+                
                 if (questions.get(currentQuestionIndex).getOptions()[i].equals(questions.get(currentQuestionIndex).getCorrectAnswer())) {
-                    scoreCount++;
+                    scoreCount += 10; // Increment score by 10 for correct answer
                     score.setText("SCORE: " + scoreCount);
-                    break;
+                } else {
+                    scoreCount -= 10; // Decrement score by 10 for incorrect answer
+                    score.setText("SCORE: " + scoreCount);
                 }
+                break;
             }
         }
     }
@@ -138,15 +147,6 @@ public class ClientWindow implements ActionListener {
             options[i].setEnabled(enable);
         }
     }
-
-	public void onAckReceived(Boolean ack){
-		if(ack){
-			submit.setEnabled(true);
-		}
-		else{
-			submit.setEnabled(false);
-		}
-	}
 
     // Load questions from a file
     private void loadQuestions(String filePath) {
@@ -167,28 +167,23 @@ public class ClientWindow implements ActionListener {
         }
     }
 
-	public void setClient(Client client) {
-		this.client = client;
-	}
-
     // Move to the next question after the current one
-	private void moveToNextQuestion() {
-		// Disable all options and reset the timer
-		for (JRadioButton option : options) {
-			option.setEnabled(false);
-		}
+    private void moveToNextQuestion() {
+        // Disable all options and reset the timer
+        for (JRadioButton option : options) {
+            option.setEnabled(false);
+        }
 
-		// Move to the next question, or finish the game if no more questions
-		if (currentQuestionIndex < questions.size() - 1) {
-			currentQuestionIndex++;  // Increment question index properly
-			showQuestion(currentQuestionIndex);  // Show the next question
-		} else {
-			JOptionPane.showMessageDialog(window, "Game Over! Final Score: " + scoreCount);
-			window.dispose();  // Close the game window after finishing the quiz
-			System.exit(0);  // Exit the program after game over
-		}
-	}
-
+        // Move to the next question, or finish the game if no more questions
+        if (currentQuestionIndex < questions.size() - 1) {
+            currentQuestionIndex++;  // Increment question index properly
+            showQuestion(currentQuestionIndex);  // Show the next question
+        } else {
+            JOptionPane.showMessageDialog(window, "Game Over! Final Score: " + scoreCount);
+            window.dispose();  // Close the game window after finishing the quiz
+            System.exit(0);  // Exit the program after game over
+        }
+    }
 
     // Timer class to handle the countdown
     public class TimerCode extends TimerTask {
@@ -204,6 +199,11 @@ public class ClientWindow implements ActionListener {
         @Override
         public void run() {
             if (duration < 0) {
+                // If the timer has expired and the question hasn't been answered
+                if (!answered) {
+                    scoreCount -= 20; // Subtract 20 points if no answer was submitted
+                    score.setText("SCORE: " + scoreCount);
+                }
                 clientWindow.moveToNextQuestion();  // Move to next question when time is up
                 this.cancel();  // Stop the timer
                 return;
@@ -218,16 +218,6 @@ public class ClientWindow implements ActionListener {
             clientWindow.timer.setText(duration + "");
             duration--;  // Decrease the timer
             clientWindow.window.repaint();
-        }
-    
-        // Getter for the duration so it can be accessed in the ClientWindow
-        public int getDuration() {
-            return duration;
-        }
-    
-        // Setter for the duration (if needed)
-        public void setDuration(int duration) {
-            this.duration = duration;
         }
     }
 
@@ -254,5 +244,17 @@ public class ClientWindow implements ActionListener {
         public String getCorrectAnswer() {
             return correctAnswer;
         }
+    }
+
+    public void onAckReceived(Boolean ack) {
+        if (ack) {
+            submit.setEnabled(true);
+        } else {
+            submit.setEnabled(false);
+        }
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
     }
 }
