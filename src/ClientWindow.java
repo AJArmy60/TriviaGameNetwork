@@ -21,9 +21,7 @@ public class ClientWindow implements ActionListener {
     private JLabel timer;
     private JLabel score;
     private TimerTask clock;
-    
     private JFrame window;
-    private static SecureRandom random = new SecureRandom();
     
     private List<Question> questions;  // To hold questions and their options
     private int currentQuestionIndex = 0;  // Track the current question
@@ -142,6 +140,15 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+	public void onAckReceived(Boolean ack){
+		if(ack){
+			submit.setEnabled(true);
+		}
+		else{
+			submit.setEnabled(false);
+		}
+	}
+
     // Load questions from a file
     private void loadQuestions(String filePath) {
         questions = new ArrayList<>();
@@ -160,6 +167,10 @@ public class ClientWindow implements ActionListener {
             e.printStackTrace();
         }
     }
+
+	public void setClient(Client client) {
+		this.client = client;
+	}
 
     // Move to the next question after the current one
 	private void moveToNextQuestion() {
