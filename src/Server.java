@@ -111,7 +111,7 @@ public class Server {
         if (message != null) {
             String[] parts = message.split(":");
             String clientID = parts[0]; // Extract the clientID
-            int questionNumber = Integer.parseInt(parts[1]); // Extract the question number
+            //int questionNumber = Integer.parseInt(parts[1]); // Extract the question number
             return clientID;
         }
         return "Failed to parse message";
@@ -198,6 +198,10 @@ public class Server {
         public String getclientID() {
             return clientID;
         }
+    }
+
+    public Boolean getGameState() {
+        return gameState;
     }
 
     public static void gameStart() {
