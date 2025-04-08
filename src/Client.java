@@ -79,6 +79,22 @@ public class Client {
                     System.err.println("Error reading server response: " + e.getMessage());
                 }
             }).start();
+
+            //another thread to handle answer feedback from server
+            new Thread(() -> {
+                try {
+                    String response;
+                    while ((response = in.readLine()) != null) {
+                        if (response.equals("CORRECT")) {
+                            clientWindow.updateScore(10); // Increment score by 10 for correct answer
+                        } else if (response.equals("INCORRECT")) {
+                            clientWindow.updateScore(-10); // Decrement score by 10 for incorrect answer
+                        }
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error reading server response: " + e.getMessage());
+                }
+            }).start();
     
         } catch (IOException e) {
             System.err.println("Error connecting to server: " + e.getMessage());
@@ -88,6 +104,19 @@ public class Client {
     //takes accepted question from server and passes it to ClientWindow logic
     public void handleReceivedQuestion(Question q){
         clientWindow.showQuestion(q);
+        q.getCorrectAnswer();
+    }
+
+    //sends answer to server
+    public void submitAnswer(String answer) {
+        try {
+            if (out != null) {
+                out.println("ANSWER:" + answer); // Send the answer to the server
+                System.out.println("Submitted answer: " + answer);
+            }
+        } catch (Exception e) {
+            System.err.println("Error submitting answer: " + e.getMessage());
+        }
     }
 
     public void sendUDP() {

@@ -157,45 +157,51 @@ public class Server {
         // Entry point for the client thread
         @Override
         public void run() {
-            try (
-                    // Input stream to receive messages from the client
-                    BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));) {
-                // Output stream to send messages to the client
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-                // Read the first message from the client, which is expected to be their name or
-                // ID
                 clientID = in.readLine();
                 if (clientID == null || clientID.isEmpty()) {
-                    // Fallback to the client's IP address if no name was provided
                     clientID = clientSocket.getInetAddress().toString();
                 }
 
-                // Store this client in the shared map so the server can communicate with them
-                // later
                 connectedClients.put(clientID, this);
                 System.out.println("Client registered as: " + clientID);
 
-                // Listen for further messages from the client in a loop
                 String clientMessage;
                 while ((clientMessage = in.readLine()) != null) {
-                    // Display message on server console
                     System.out.println("[" + clientID + "]: " + clientMessage);
-                    // Send acknowledgment back to the client
-                    out.println("Server received: " + clientMessage);
+
+                    // Handle submitted answers
+                    if (clientMessage.startsWith("ANSWER:")) {
+                        String submittedAnswer = clientMessage.substring(7).trim();
+                        handleAnswer(submittedAnswer);
+                    }
                 }
             } catch (IOException e) {
-                // Handle any communication errors
                 System.err.println("Error handling client: " + e.getMessage());
             } finally {
-                // Remove the client from the map when they disconnect
                 connectedClients.remove(clientID);
                 try {
-                    clientSocket.close(); // Always close the socket when done
+                    clientSocket.close();
                 } catch (IOException e) {
                     System.err.println("Error closing socket: " + e.getMessage());
                 }
                 System.out.println("Connection with " + clientID + " closed.");
+            }
+        }
+
+        // Handle the submitted answer
+        private void handleAnswer(String submittedAnswer) {
+            Question currentQuestion = questionHandler.getQuestionArray().get(0); // Get the current question
+            boolean isCorrect = submittedAnswer.equals(currentQuestion.getCorrectAnswer());
+
+            if (isCorrect) {
+                sendMessage("CORRECT");
+                System.out.println("Client " + clientID + " answered correctly.");
+            } else {
+                sendMessage("INCORRECT");
+                System.out.println("Client " + clientID + " answered incorrectly.");
             }
         }
 

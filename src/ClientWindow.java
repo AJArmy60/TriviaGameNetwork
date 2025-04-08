@@ -89,7 +89,7 @@ public class ClientWindow implements ActionListener {
                 client.sendUDP(); //send UDP packet to server
                 break;
             case "Submit":
-                //handleAnswerSubmission();  // Check if the selected answer is correct and update score
+                handleAnswerSubmission();  // Check if the selected answer is correct and update score
                 poll.setEnabled(false);  // Disable Poll button after Submit
                 submit.setEnabled(false);  // Disable Submit button after submission
                 enableOptions(false);  // Disable options after Submit
@@ -128,23 +128,33 @@ public class ClientWindow implements ActionListener {
         });
     }
 
-    // Handle the submission of an answer
-    // private void handleAnswerSubmission() {
-    //     for (int i = 0; i < options.length; i++) {
-    //         if (options[i].isSelected()) {
-    //             answered = true;  // Mark the question as answered
-                
-    //             if (questions.get(currentQuestionIndex).getOptions()[i].equals(questions.get(currentQuestionIndex).getCorrectAnswer())) {
-    //                 scoreCount += 10; // Increment score by 10 for correct answer
-    //                 score.setText("SCORE: " + scoreCount);
-    //             } else {
-    //                 scoreCount -= 10; // Decrement score by 10 for incorrect answer
-    //                 score.setText("SCORE: " + scoreCount);
-    //             }
-    //             break;
-    //         }
-    //     }
-    // }
+    //Handle the submission of an answer
+    private void handleAnswerSubmission() {
+        String selectedAnswer = null;
+    
+        // Find the selected option
+        for (int i = 0; i < options.length; i++) {
+            if (options[i].isSelected()) {
+                selectedAnswer = options[i].getText(); // Get the text of the selected option
+                break;
+            }
+        }
+    
+        if (selectedAnswer != null) {
+            answered = true; // Mark the question as answered
+            client.submitAnswer(selectedAnswer); // Send the selected answer to the Client class
+            poll.setEnabled(false); // Disable Poll button after Submit
+            submit.setEnabled(false); // Disable Submit button after submission
+            enableOptions(false); // Disable options after Submit
+        } else {
+            JOptionPane.showMessageDialog(window, "Please select an answer before submitting.");
+        }
+    }
+
+    public void updateScore(int delta) {
+        scoreCount += delta;
+        SwingUtilities.invokeLater(() -> score.setText("SCORE: " + scoreCount));
+    }
 
     // Enable or disable the options based on the argument
     private void enableOptions(boolean enable) {
