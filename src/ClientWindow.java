@@ -26,8 +26,6 @@ public class ClientWindow implements ActionListener {
     private TimerTask pollClock;
     private boolean pollPhase = true; // Track whether it's the polling phase
     
-    private List<Question> questions;  // To hold questions and their options
-    private int currentQuestionIndex = 0;  // Track the current question
     private int scoreCount = 0;  // Track the score
     private boolean answered = false;  // Flag to track if an answer has been submitted
     
@@ -74,10 +72,6 @@ public class ClientWindow implements ActionListener {
         window.setVisible(true);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
-
-        // Load questions and options from the file
-        loadQuestions("questions.txt");
-        showQuestion(currentQuestionIndex);  // Display the first question
     }
 
     // This method is called when you check/uncheck any radio button or press submit/poll
@@ -90,12 +84,12 @@ public class ClientWindow implements ActionListener {
             case "Poll":
                 poll.setEnabled(false);  // Disable Poll button
 
-                //submit.setEnabled(true);  // Enable Submit button //should only be enabled when positive ack is recieved
-                //enableOptions(true);  // Enable options after Poll is clicked
+                submit.setEnabled(true);  // Enable Submit button //should only be enabled when positive ack is recieved
+                enableOptions(true);  // Enable options after Poll is clicked
                 client.sendUDP(); //send UDP packet to server
                 break;
             case "Submit":
-                handleAnswerSubmission();  // Check if the selected answer is correct and update score
+                //handleAnswerSubmission();  // Check if the selected answer is correct and update score
                 poll.setEnabled(false);  // Disable Poll button after Submit
                 submit.setEnabled(false);  // Disable Submit button after submission
                 enableOptions(false);  // Disable options after Submit
@@ -105,91 +99,57 @@ public class ClientWindow implements ActionListener {
         }
     }
 
-    // Show the question at the given index
-    private void showQuestion(int index) {
-        Question currentQuestion = questions.get(index);
-        question.setText("Q" + (index + 1) + ". " + currentQuestion.getQuestion());
-        for (int i = 0; i < options.length; i++) {
-            options[i].setText(currentQuestion.getOptions()[i]);
-            options[i].setEnabled(false); // Disable options at the start of the question
-        }
-    
-        // Reset the Poll and Submit buttons
-        //can poll
-        poll.setEnabled(true);
-        //cannot submit yet
-        submit.setEnabled(false);
-    
-        // Start the polling timer (5 seconds for polling)
-        timer.setText("5");
-        pollPhase = true; // Set to polling phase
-        pollClock = new TimerCode(5, this, true); // Pass `true` for polling phase
-        Timer t = new Timer();
-        t.schedule(pollClock, 0, 1000); // Schedule the polling timer to run every second
-    
-        // Reset the answered flag
-        answered = false;
+    // Show the given Question object
+    public void showQuestion(Question currentQuestion) {
+        SwingUtilities.invokeLater(() -> {
+            // Set the question text
+            question.setText(currentQuestion.getQuestion());
+
+            // Set the options for the question
+            String[] optionsArray = currentQuestion.getOptions();
+            for (int i = 0; i < options.length; i++) {
+                options[i].setText(optionsArray[i]);
+                options[i].setEnabled(false); // Disable options at the start of the question
+            }
+
+            // Reset the Poll and Submit buttons
+            poll.setEnabled(true); // Enable Poll button
+            submit.setEnabled(false); // Disable Submit button initially
+
+            // Start the polling timer (5 seconds for polling)
+            timer.setText("5");
+            pollPhase = true; // Set to polling phase
+            pollClock = new TimerCode(5, this, true); // Pass `true` for polling phase
+            Timer t = new Timer();
+            t.schedule(pollClock, 0, 1000); // Schedule the polling timer to run every second
+
+            // Reset the answered flag
+            answered = false;
+        });
     }
 
     // Handle the submission of an answer
-    private void handleAnswerSubmission() {
-        for (int i = 0; i < options.length; i++) {
-            if (options[i].isSelected()) {
-                answered = true;  // Mark the question as answered
+    // private void handleAnswerSubmission() {
+    //     for (int i = 0; i < options.length; i++) {
+    //         if (options[i].isSelected()) {
+    //             answered = true;  // Mark the question as answered
                 
-                if (questions.get(currentQuestionIndex).getOptions()[i].equals(questions.get(currentQuestionIndex).getCorrectAnswer())) {
-                    scoreCount += 10; // Increment score by 10 for correct answer
-                    score.setText("SCORE: " + scoreCount);
-                } else {
-                    scoreCount -= 10; // Decrement score by 10 for incorrect answer
-                    score.setText("SCORE: " + scoreCount);
-                }
-                break;
-            }
-        }
-    }
+    //             if (questions.get(currentQuestionIndex).getOptions()[i].equals(questions.get(currentQuestionIndex).getCorrectAnswer())) {
+    //                 scoreCount += 10; // Increment score by 10 for correct answer
+    //                 score.setText("SCORE: " + scoreCount);
+    //             } else {
+    //                 scoreCount -= 10; // Decrement score by 10 for incorrect answer
+    //                 score.setText("SCORE: " + scoreCount);
+    //             }
+    //             break;
+    //         }
+    //     }
+    // }
 
     // Enable or disable the options based on the argument
     private void enableOptions(boolean enable) {
         for (int i = 0; i < options.length; i++) {
             options[i].setEnabled(enable);
-        }
-    }
-
-    // Load questions from a file
-    private void loadQuestions(String filePath) {
-        questions = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 6) {
-                    String questionText = parts[0];
-                    String[] options = new String[] {parts[1], parts[2], parts[3], parts[4]};
-                    String correctAnswer = parts[5];
-                    questions.add(new Question(questionText, options, correctAnswer));
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Move to the next question after the current one
-    private void moveToNextQuestion() {
-        // Disable all options and reset the timer
-        for (JRadioButton option : options) {
-            option.setEnabled(false);
-        }
-
-        // Move to the next question, or finish the game if no more questions
-        if (currentQuestionIndex < questions.size() - 1) {
-            currentQuestionIndex++;  // Increment question index properly
-            showQuestion(currentQuestionIndex);  // Show the next question
-        } else {
-            JOptionPane.showMessageDialog(window, "Game Over! Final Score: " + scoreCount);
-            window.dispose();  // Close the game window after finishing the quiz
-            System.exit(0);  // Exit the program after game over
         }
     }
 
@@ -226,7 +186,7 @@ public class ClientWindow implements ActionListener {
                         scoreCount -= 20; // Subtract 20 points if no answer was submitted
                         score.setText("SCORE: " + scoreCount);
                     }
-                    clientWindow.moveToNextQuestion(); // Move to the next question
+                    //clientWindow.moveToNextQuestion(); // Move to the next question
                     this.cancel(); // Stop the submission timer
                 }
                 return;

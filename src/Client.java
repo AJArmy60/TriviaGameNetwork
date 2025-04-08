@@ -85,6 +85,11 @@ public class Client {
         }
     }
 
+    //takes accepted question from server and passes it to ClientWindow logic
+    public void handleReceivedQuestion(Question q){
+        clientWindow.showQuestion(q);
+    }
+
     public void sendUDP() {
         try {
             DatagramSocket udpSocket = new DatagramSocket();
@@ -106,11 +111,11 @@ public class Client {
 
     private void handleServerResponse(String response) {
         // Handle the server's TCP response (ack or negative-ack)
-        if (response.equals("true")) {
+        if (response.equals("ack")) {
             // Received "ack" from the server
             clientWindow.onAckReceived(true);
             System.out.println("Received ack from server.");
-        } else if (response.equals("false")) {
+        } else if (response.equals("negative-ack")) {
             // Received "negative-ack" from the server
             clientWindow.onAckReceived(false);
             System.out.println("Received negative-ack from server.");

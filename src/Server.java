@@ -232,7 +232,6 @@ public class Server {
     //handles game logic 
     public static void gameStart() {
         Scanner scanner = new Scanner(System.in);
-        UDPThread queueManager = new UDPThread();
 
         // player must press enter on server to begin game
         System.out.println("When all players are connected, press enter to begin game.");
@@ -250,14 +249,16 @@ public class Server {
                 //sends the first index at the questions array, after each question, first index gets removed
                 clientHandler.sendQuestion(questionHandler.getQuestionArray().get(0));
             }
+            //collects UDP messages during poll period
             acceptUDPMessage();
 
-            //wait for poll timer
+            //wait for poll timer to finish
 
             //sorts through queue and sends Acks to Client
+            UDPThread queueManager = new UDPThread();
             new Thread(queueManager).start();
 
-            //wait for client responds
+            //wait for client's response
 
             //remove used question so next can be displayed
             questionHandler.nextQuestion();
