@@ -45,12 +45,12 @@ public class QuestionHandler {
         return questions;
     }
 
-    public Question getNextQuestion(){
+    public void nextQuestion(){
         if(!outOfQuestions()){
-            return questions.get(currentQuestionIndex++);
+            questions.remove(0);
         }
         else{
-            return null;
+            System.out.println("No more questions.");
         }
     }
 

@@ -23,7 +23,7 @@ public class Server {
             System.out.println("Server started. Waiting for a client...");
 
             //gamestart handles game logic
-            gameStart();
+            new Thread(() -> gameStart()).start();
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected: " + clientSocket.getInetAddress());
@@ -232,7 +232,7 @@ public class Server {
     //handles game logic 
     public static void gameStart() {
         Scanner scanner = new Scanner(System.in);
-        questionHandler.getQuestionArray();
+        UDPThread queueManager = new UDPThread();
 
         // player must press enter on server to begin game
         System.out.println("When all players are connected, press enter to begin game.");
@@ -244,8 +244,24 @@ public class Server {
 
         //game loop is active while the gameState is true and the array still has questions
         while(gameState && !questionHandler.outOfQuestions()){
-            //ClientHandler.sendQuestion();
+            //for all clients
+            for (ClientHandler clientHandler : connectedClients.values()) {
+                //using clienthandler send a Question to each client at array index 
+                //sends the first index at the questions array, after each question, first index gets removed
+                clientHandler.sendQuestion(questionHandler.getQuestionArray().get(0));
+            }
             acceptUDPMessage();
+
+            //wait for poll timer
+
+            //sorts through queue and sends Acks to Client
+            new Thread(queueManager).start();
+
+            //wait for client responds
+
+            //remove used question so next can be displayed
+            questionHandler.nextQuestion();
+
         }
         scanner.close();
     }
