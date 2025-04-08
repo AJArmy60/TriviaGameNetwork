@@ -21,6 +21,10 @@ public class ClientWindow implements ActionListener {
     private JLabel score;
     private TimerTask clock;
     private JFrame window;
+
+    //variables for polling timer
+    private TimerTask pollClock;
+    private boolean pollPhase = true; // Track whether it's the polling phase
     
     private List<Question> questions;  // To hold questions and their options
     private int currentQuestionIndex = 0;  // Track the current question
@@ -85,8 +89,9 @@ public class ClientWindow implements ActionListener {
         switch (input) {
             case "Poll":
                 poll.setEnabled(false);  // Disable Poll button
-                submit.setEnabled(true);  // Enable Submit button
-                enableOptions(true);  // Enable options after Poll is clicked
+
+                //submit.setEnabled(true);  // Enable Submit button //should only be enabled when positive ack is recieved
+                //enableOptions(true);  // Enable options after Poll is clicked
                 client.sendUDP(); //send UDP packet to server
                 break;
             case "Submit":
@@ -106,19 +111,22 @@ public class ClientWindow implements ActionListener {
         question.setText("Q" + (index + 1) + ". " + currentQuestion.getQuestion());
         for (int i = 0; i < options.length; i++) {
             options[i].setText(currentQuestion.getOptions()[i]);
-            options[i].setEnabled(false);  // Disable options at the start of the question
+            options[i].setEnabled(false); // Disable options at the start of the question
         }
-
+    
         // Reset the Poll and Submit buttons
+        //can poll
         poll.setEnabled(true);
+        //cannot submit yet
         submit.setEnabled(false);
-
-        // Set the timer to 10 seconds for this question
-        timer.setText("10");
-        clock = new TimerCode(10, this);  // Pass `this` (ClientWindow) as the reference
+    
+        // Start the polling timer (5 seconds for polling)
+        timer.setText("5");
+        pollPhase = true; // Set to polling phase
+        pollClock = new TimerCode(5, this, true); // Pass `true` for polling phase
         Timer t = new Timer();
-        t.schedule(clock, 0, 1000);  // Schedule the timer to run every second
-        
+        t.schedule(pollClock, 0, 1000); // Schedule the polling timer to run every second
+    
         // Reset the answered flag
         answered = false;
     }
@@ -188,35 +196,50 @@ public class ClientWindow implements ActionListener {
     // Timer class to handle the countdown
     public class TimerCode extends TimerTask {
         private int duration;
-        private ClientWindow clientWindow;  // Reference to ClientWindow
+        private ClientWindow clientWindow;
+        private boolean isPollingPhase; // Track whether this is the polling phase
     
-        // Constructor to initialize duration and the ClientWindow reference
-        public TimerCode(int duration, ClientWindow clientWindow) {
+        public TimerCode(int duration, ClientWindow clientWindow, boolean isPollingPhase) {
             this.duration = duration;
             this.clientWindow = clientWindow;
+            this.isPollingPhase = isPollingPhase;
         }
     
         @Override
         public void run() {
             if (duration < 0) {
-                // If the timer has expired and the question hasn't been answered
-                if (!answered) {
-                    scoreCount -= 20; // Subtract 20 points if no answer was submitted
-                    score.setText("SCORE: " + scoreCount);
+                if (isPollingPhase) {
+                    // End of polling phase
+                    pollPhase = false; // Switch to submission phase
+                    poll.setEnabled(false); // Disable Poll button
+                    clientWindow.enableOptions(false); // Disable options until ack is received
+                    this.cancel(); // Stop the polling timer
+    
+                    // Start the submission timer (10 seconds for submission)
+                    timer.setText("10");
+                    Timer t = new Timer();
+                    clock = new TimerCode(10, clientWindow, false); // Pass `false` for submission phase
+                    t.schedule(clock, 0, 1000); // Schedule the submission timer
+                } else {
+                    // End of submission phase
+                    if (!answered) {
+                        scoreCount -= 20; // Subtract 20 points if no answer was submitted
+                        score.setText("SCORE: " + scoreCount);
+                    }
+                    clientWindow.moveToNextQuestion(); // Move to the next question
+                    this.cancel(); // Stop the submission timer
                 }
-                clientWindow.moveToNextQuestion();  // Move to next question when time is up
-                this.cancel();  // Stop the timer
                 return;
             }
     
-            // Change timer color as time runs out
+            // Update the timer display
             if (duration < 6)
                 clientWindow.timer.setForeground(Color.red);
             else
                 clientWindow.timer.setForeground(Color.black);
     
             clientWindow.timer.setText(duration + "");
-            duration--;  // Decrease the timer
+            duration--;
             clientWindow.window.repaint();
         }
     }
@@ -224,6 +247,10 @@ public class ClientWindow implements ActionListener {
 	public int getCurrentQuestionIndex(){
 		return currentQuestionIndex;
 	}
+
+    public void setCurrentQuestionIndex(int i){
+        currentQuestionIndex = i;
+    }
 
     // Question class to hold question, options, and the correct answer
     public class Question {
@@ -250,11 +277,16 @@ public class ClientWindow implements ActionListener {
         }
     }
 
+	//determines which client can answer based off poll
     public void onAckReceived(Boolean ack) {
+		//client is the first in queue, can answer question
         if (ack) {
             submit.setEnabled(true);
+			enableOptions(true);
+		//client was late, cannot answer question
         } else {
             submit.setEnabled(false);
+			enableOptions(false);
         }
     }
 

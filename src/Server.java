@@ -10,10 +10,10 @@ public class Server {
     private static int TCP_PORT;
     private static int UDP_PORT = 2000; // port for UDP
     private static ConcurrentLinkedQueue<String> udpMessageQueue = new ConcurrentLinkedQueue<>();
-    private static ConcurrentHashMap<String, ClientHandler> connectedClients = new ConcurrentHashMap<>(); // keeps track
-                                                                                                          // of clients
+    private static ConcurrentHashMap<String, ClientHandler> connectedClients = new ConcurrentHashMap<>(); // keeps track of clients
     private static boolean gameState;
 
+    //main handles connection of new clients
     public static void main(String[] args) {
 
         // establish connection, port #, max connections, IP addresses
@@ -21,6 +21,7 @@ public class Server {
             loadServerConfig("config/serverConfig.txt");
             System.out.println("Server started. Waiting for a client...");
 
+            //gamestart handles game logic
             gameStart();
             while (true) {
                 Socket clientSocket = serverSocket.accept();
@@ -207,6 +208,7 @@ public class Server {
         return gameState;
     }
 
+    //handles game logic
     public static void gameStart() {
         Scanner scanner = new Scanner(System.in);
 

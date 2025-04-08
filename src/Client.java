@@ -1,3 +1,4 @@
+import java.awt.SystemTray;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -84,9 +85,11 @@ public class Client {
         if (response.equals("true")) {
             // Received "ack" from the server
             clientWindow.onAckReceived(true);
+            System.out.println("Received ack from server.");
         } else if (response.equals("false")) {
             // Received "negative-ack" from the server
             clientWindow.onAckReceived(false);
+            System.out.println("Received negative-ack from server.");
         }
     }
 
