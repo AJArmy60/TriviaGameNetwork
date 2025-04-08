@@ -1,5 +1,8 @@
 // Question class to hold question, options, and the correct answer
-public class Question {
+import java.io.Serializable;
+
+public class Question implements Serializable {
+    private static final long serialVersionUID = 1L; // Recommended for Serializable classes
     private String question;
     private String[] options;
     private String correctAnswer;

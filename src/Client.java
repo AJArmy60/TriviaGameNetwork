@@ -13,6 +13,8 @@ public class Client {
     private BufferedReader in;
     private ClientWindow clientWindow; // Reference to the ClientWindow
     private QuestionHandler questionHandler;
+    private ObjectInputStream objectIn; // Used to receive objects from the server
+    
 
     public Client(ClientWindow clientWindow, QuestionHandler questionHandler) {
         this.clientWindow = clientWindow;
@@ -40,23 +42,44 @@ public class Client {
         try {
             // Establish a TCP connection to the server
             socket = new Socket(SERVER_IPS.get(0), SERVER_PORT);
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
+            out = new PrintWriter(socket.getOutputStream(), true); // For sending strings
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream())); // For receiving strings
+            objectIn = new ObjectInputStream(socket.getInputStream()); // For receiving objects
+    
             System.out.println("Connected to server.");
             out.println("Client connected: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort());
-
+    
             // Start a thread to listen for server responses
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        // Check if the server sent a string or an object
+                        if (socket.getInputStream().available() > 0) {
+                            Object receivedObject = objectIn.readObject();
+                            if (receivedObject instanceof Question) {
+                                // Handle the received Question object
+                                Question question = (Question) receivedObject;
+                                handleReceivedQuestion(question);
+                            }
+                        }
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    System.err.println("Error reading server response: " + e.getMessage());
+                }
+            }).start();
+    
+            // Start another thread to listen for string responses
             new Thread(() -> {
                 try {
                     String response;
                     while ((response = in.readLine()) != null) {
-                        handleServerResponse(response); // Handle the server's response
+                        handleServerResponse(response); // Handle the server's string response
                     }
                 } catch (IOException e) {
                     System.err.println("Error reading server response: " + e.getMessage());
                 }
             }).start();
+    
         } catch (IOException e) {
             System.err.println("Error connecting to server: " + e.getMessage());
         }

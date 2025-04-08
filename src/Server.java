@@ -139,12 +139,19 @@ public class Server {
     // Handles communication with a single client connected to the server
     static class ClientHandler implements Runnable {
         private Socket clientSocket; // The socket used for communicating with the client
+        private ObjectOutputStream objectOut; // Used to send objects to the client
         private PrintWriter out; // Used to send messages to the client
         private String clientID; // Client ID
 
         // Constructor to initialize the client socket
         public ClientHandler(Socket clientSocket) {
             this.clientSocket = clientSocket;
+            try {
+                // Initialize the ObjectOutputStream
+                objectOut = new ObjectOutputStream(clientSocket.getOutputStream());
+            } catch (IOException e) {
+                System.err.println("Error initializing ObjectOutputStream: " + e.getMessage());
+            }
         }
 
         // Entry point for the client thread
@@ -192,6 +199,19 @@ public class Server {
             }
         }
 
+        // Method to send a Question object to the client
+        public void sendQuestion(Question question) {
+            try {
+                if (objectOut != null) {
+                    objectOut.writeObject(question); // Serialize and send the Question object
+                    objectOut.flush();
+                    System.out.println("Sent question to ClientID=" + clientID);
+                }
+            } catch (IOException e) {
+                System.err.println("Error sending question: " + e.getMessage());
+            }
+        }
+        
         // Sends a message to this client
         public void sendMessage(String message) {
             if (out != null) {
@@ -224,6 +244,7 @@ public class Server {
 
         //game loop is active while the gameState is true and the array still has questions
         while(gameState && !questionHandler.outOfQuestions()){
+            //ClientHandler.sendQuestion();
             acceptUDPMessage();
         }
         scanner.close();
