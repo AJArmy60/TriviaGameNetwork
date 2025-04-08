@@ -11,6 +11,7 @@ public class Server {
     private static int UDP_PORT = 2000; // port for UDP
     private static ConcurrentLinkedQueue<String> udpMessageQueue = new ConcurrentLinkedQueue<>();
     private static ConcurrentHashMap<String, ClientHandler> connectedClients = new ConcurrentHashMap<>(); // keeps track of clients
+    private static QuestionHandler questionHandler = new QuestionHandler();
     private static boolean gameState;
 
     //main handles connection of new clients
@@ -208,9 +209,10 @@ public class Server {
         return gameState;
     }
 
-    //handles game logic
+    //handles game logic 
     public static void gameStart() {
         Scanner scanner = new Scanner(System.in);
+        questionHandler.getQuestionArray();
 
         // player must press enter on server to begin game
         System.out.println("When all players are connected, press enter to begin game.");
@@ -219,7 +221,9 @@ public class Server {
         // game begins
         gameState = true;
         System.out.println("Game started!");
-        while(gameState){
+
+        //game loop is active while the gameState is true and the array still has questions
+        while(gameState && !questionHandler.outOfQuestions()){
             acceptUDPMessage();
         }
         scanner.close();

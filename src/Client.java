@@ -1,4 +1,3 @@
-import java.awt.SystemTray;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -13,9 +12,11 @@ public class Client {
     private PrintWriter out;
     private BufferedReader in;
     private ClientWindow clientWindow; // Reference to the ClientWindow
+    private QuestionHandler questionHandler;
 
-    public Client(ClientWindow clientWindow) {
+    public Client(ClientWindow clientWindow, QuestionHandler questionHandler) {
         this.clientWindow = clientWindow;
+        this.questionHandler = questionHandler;
     }
 
     private static void loadClientConfig(String filePath) {
@@ -65,7 +66,7 @@ public class Client {
         try {
             DatagramSocket udpSocket = new DatagramSocket();
             String clientID = InetAddress.getLocalHost().getHostName(); // Use hostname as ClientID
-            int questionNumber = clientWindow.getCurrentQuestionIndex(); // Get the current question index
+            int questionNumber = questionHandler.getCurrentQuestionIndex(); // Get the current question index
             String message = "buzz:" + clientID + ":" + questionNumber; // Format the message
             byte[] buffer = message.getBytes();
 
@@ -109,7 +110,8 @@ public class Client {
 
         // Create the ClientWindow and pass it to the Client
         ClientWindow window = new ClientWindow();
-        Client client = new Client(window);
+        QuestionHandler questionHandler = new QuestionHandler();
+        Client client = new Client(window, questionHandler);
         window.setClient(client); // Pass the client to the ClientWindow
 
         client.connectToServer();
