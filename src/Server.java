@@ -237,7 +237,7 @@ public class Server {
             if (!hasSubmittedAnswer && receivedAck) {
                 sendMessage("TIMEOUT");
                 System.out.println("Client " + clientID + " did not submit an answer (TIMEOUT).");
-                clientScores.merge(clientID, -10, Integer::sum); // Deduct 10 points for timeout
+                clientScores.merge(clientID, -20, Integer::sum); // Deduct 10 points for timeout
             }
         }
 
