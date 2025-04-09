@@ -109,6 +109,7 @@ public class Server {
             ClientHandler clientHandler = connectedClients.get(clientID);
             if (clientHandler != null) {
                 clientHandler.sendMessage("ack");
+                clientHandler.handleAck(true); // Mark that the client received a positive ack
                 System.out.println("Sent 'ack' to ClientID=" + clientID);
             } else {
                 System.err.println("No ClientHandler found for ClientID=" + clientID);
@@ -120,6 +121,7 @@ public class Server {
                 clientHandler = connectedClients.get(clientID);
                 if (clientHandler != null) {
                     clientHandler.sendMessage("negative-ack");
+                    clientHandler.handleAck(false); // Mark that the client received a negative ack
                     System.out.println("Sent 'negative-ack' to ClientID=" + clientID);
                 } else {
                     System.err.println("No ClientHandler found for ClientID=" + clientID);
@@ -165,6 +167,8 @@ public class Server {
         private ObjectOutputStream objectOut; // Used to send objects to the client
         private PrintWriter out; // Used to send messages to the client
         private String clientID; // Client ID
+        private boolean hasSubmittedAnswer = false; // Flag to track if the client has submitted an answer
+        private boolean receivedAck = false; // Flag to track if the client received a positive ack
 
         // Constructor to initialize the client socket
         public ClientHandler(Socket clientSocket) {
@@ -194,6 +198,7 @@ public class Server {
                     // Handle submitted answers
                     if (clientMessage.startsWith("ANSWER:")) {
                         String submittedAnswer = clientMessage.substring(7).trim();
+                        hasSubmittedAnswer = true; // Mark that the client has submitted an answer
                         handleAnswer(submittedAnswer);
                     }
                 }
@@ -211,19 +216,40 @@ public class Server {
         }
 
         // Handle the submitted answer
-        private void handleAnswer(String submittedAnswer) {
+        public void handleAnswer(String submittedAnswer) {
             Question currentQuestion = questionHandler.getQuestionArray().get(0); // Get the current question
-        
-            // Check if the submitted answer is correct
+
             if (submittedAnswer.equals(currentQuestion.getCorrectAnswer())) {
+                // Trigger CORRECT if the submitted answer matches the correct answer
                 sendMessage("CORRECT");
                 System.out.println("Client " + clientID + " answered correctly.");
                 clientScores.merge(clientID, 10, Integer::sum); // Add 10 points for a correct answer
             } else {
+                // Trigger INCORRECT if the submitted answer does not match the correct answer
                 sendMessage("INCORRECT");
                 System.out.println("Client " + clientID + " answered incorrectly.");
-                clientScores.merge(clientID, -10, Integer::sum); // Deduct 5 points for an incorrect answer
+                clientScores.merge(clientID, -10, Integer::sum); // Deduct 10 points for an incorrect answer
             }
+        }
+
+        // Handle timeout if no answer was submitted
+        public void handleTimeout() {
+            if (!hasSubmittedAnswer && receivedAck) {
+                sendMessage("TIMEOUT");
+                System.out.println("Client " + clientID + " did not submit an answer (TIMEOUT).");
+                clientScores.merge(clientID, -10, Integer::sum); // Deduct 10 points for timeout
+            }
+        }
+
+        // Reset the submission and ack flags for a new question
+        public void resetFlags() {
+            hasSubmittedAnswer = false;
+            receivedAck = false;
+        }
+
+        // Method to handle positive acknowledgment
+        public void handleAck(boolean isPositive) {
+            receivedAck = isPositive;
         }
 
         // Method to send a Question object to the client
@@ -282,6 +308,10 @@ public class Server {
         //game loop is active while the gameState is true and the array still has questions
         while(gameState && !questionHandler.outOfQuestions()){
             Question currentQuestion = questionHandler.getQuestionArray().get(0);
+            // Reset submission and ack flags for all clients at the start of a new question
+            for (ClientHandler clientHandler : connectedClients.values()) {
+                clientHandler.resetFlags();
+            }
             //for all clients
             for (ClientHandler clientHandler : connectedClients.values()) {
                 //using clienthandler send a Question to each client at array index 
@@ -369,6 +399,10 @@ public class Server {
                 System.out.println("Polling phase ended.");
             } else {
                 System.out.println("Answering phase ended.");
+                // Trigger timeout handling for all connected clients
+                for (ClientHandler clientHandler : connectedClients.values()) {
+                    clientHandler.handleTimeout(); // Handle timeout if no answer was submitted
+                }
             }
         }
     }
