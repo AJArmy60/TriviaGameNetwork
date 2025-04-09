@@ -25,6 +25,8 @@ public class Server {
 
             //gamestart handles game logic
             new Thread(() -> gameStart()).start();
+            // Start a thread to listen for server terminal commands
+            new Thread(() -> listenForCommands()).start();
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected: " + clientSocket.getInetAddress());
@@ -40,6 +42,32 @@ public class Server {
         } catch (Exception e) {
             // Handle unexpected errors
             System.err.println("Unexpected error: " + e.getMessage());
+        }
+    }
+
+    // Method to listen for server terminal commands
+    private static void listenForCommands() {
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            String command = scanner.nextLine().trim();
+            if (command.startsWith("KILL:")) {
+                String clientID = command.substring(5).trim(); // Extract the ClientID
+                terminateClient(clientID); // Call the terminateClient method
+            } else {
+                System.out.println("Unknown command: " + command);
+            }
+        }
+    }
+
+    // Method to send a KILL signal to a specific client
+    public static void terminateClient(String clientID) {
+        ClientHandler clientHandler = connectedClients.get(clientID);
+        if (clientHandler != null) {
+            clientHandler.sendMessage("KILL");
+            System.out.println("Sent KILL signal to ClientID=" + clientID);
+            connectedClients.remove(clientID); // Remove the client from the connected clients map
+        } else {
+            System.err.println("ClientID=" + clientID + " not found.");
         }
     }
 
