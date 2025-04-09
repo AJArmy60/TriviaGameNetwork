@@ -189,9 +189,12 @@ public class Server {
             if (submittedAnswer.equals(currentQuestion.getCorrectAnswer())) {
                 sendMessage("CORRECT");
                 System.out.println("Client " + clientID + " answered correctly.");
-            } else {
+            } else if (!(submittedAnswer.equals(currentQuestion.getCorrectAnswer()))){
                 sendMessage("INCORRECT");
                 System.out.println("Client " + clientID + " answered incorrectly.");
+            } else {
+                sendMessage("TIMEOUT");
+                System.out.println("Client " + clientID + " timed out.");
             }
         }
 

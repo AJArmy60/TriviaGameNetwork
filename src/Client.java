@@ -139,7 +139,7 @@ public class Client {
             clientWindow.updateScore(10);
         } else if (response.equals("INCORRECT")) {
             clientWindow.updateScore(-10);
-        } else {
+        } else if (response.equals("TIMEOUT")) {
             clientWindow.updateScore(-20);
         }
     }
