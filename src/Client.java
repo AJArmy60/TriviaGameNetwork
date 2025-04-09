@@ -152,6 +152,9 @@ public class Client {
             // Received "negative-ack" from the server
             clientWindow.onAckReceived(false);
             System.out.println("Received negative-ack from server.");
+        } else if (response.equals("game-started!")){
+            clientWindow.enablePollButton(); // Enable the Poll button
+            System.out.println("Game started! Poll button enabled.");
         }
     }
 
