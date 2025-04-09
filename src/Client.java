@@ -104,14 +104,13 @@ public class Client {
 
             // Use only the IP address as the ClientID
             String clientID = socket.getLocalAddress().getHostAddress();
-            String message = "buzz:" + clientID; // Standardized message format
-            byte[] buffer = message.getBytes();
+            byte[] buffer = clientID.getBytes(); // Send only the ClientID
 
             InetAddress serverAddress = InetAddress.getByName(SERVER_IPS.get(0));
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, UDP_PORT);
             udpSocket.send(packet);
 
-            System.out.println("UDP packet sent: " + message);
+            System.out.println("UDP packet sent: ClientID=" + clientID);
             udpSocket.close();
         } catch (IOException e) {
             System.err.println("Error sending UDP packet: " + e.getMessage());

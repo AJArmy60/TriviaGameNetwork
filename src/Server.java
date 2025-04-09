@@ -52,18 +52,12 @@ public class Server {
                 socket.receive(packet); // Receive the UDP packet
 
                 // Extract the message from the packet
-                String message = new String(packet.getData(), 0, packet.getLength()).trim();
-                System.out.println("Received UDP message: " + message);
+                String clientID = new String(packet.getData(), 0, packet.getLength()).trim();
+                System.out.println("Received UDP message: ClientID=" + clientID);
 
-                // Parse the message (expected format: "buzz:<ClientID>")
-                String[] parts = message.split(":");
-                if (parts.length == 2 && "buzz".equals(parts[0])) {
-                    String clientID = parts[1].trim(); // Extract only the ClientID
-                    udpMessageQueue.add(clientID); // Add only the ClientID to the queue
-                    System.out.println("Added to queue: ClientID=" + clientID);
-                } else {
-                    System.err.println("Invalid UDP message format: " + message);
-                }
+                // Add the ClientID directly to the queue
+                udpMessageQueue.add(clientID);
+                System.out.println("Added to queue: ClientID=" + clientID);
             }
         } catch (IOException e) {
             // Handle errors related to UDP communication
@@ -76,21 +70,32 @@ public class Server {
     public static class UDPThread implements Runnable {
         @Override
         public void run() {
-            // Get the first ClientID from the queue
             String clientID = udpMessageQueue.poll();
             if (clientID == null) {
                 System.err.println("No messages in the UDP queue.");
                 return;
             }
 
-            // Send "ack" to the first ClientID
-            ClientHandler.sendMessageToClient(clientID, "ack");
-            System.out.println("Sent 'ack' to ClientID=" + clientID);
+            clientID = clientID.trim(); // Ensure no extra spaces
+            System.out.println("Looking up ClientID=" + clientID + " in connectedClients.");
+            ClientHandler clientHandler = connectedClients.get(clientID);
+            if (clientHandler != null) {
+                clientHandler.sendMessage("ack");
+                System.out.println("Sent 'ack' to ClientID=" + clientID);
+            } else {
+                System.err.println("No ClientHandler found for ClientID=" + clientID);
+            }
 
-            // Send "negative-ack" to the rest of the ClientIDs in the queue
             while (!udpMessageQueue.isEmpty()) {
-                clientID = udpMessageQueue.poll();
-                ClientHandler.sendMessageToClient(clientID, "negative-ack");
+                clientID = udpMessageQueue.poll().trim();
+                System.out.println("Looking up ClientID=" + clientID + " in connectedClients.");
+                clientHandler = connectedClients.get(clientID);
+                if (clientHandler != null) {
+                    clientHandler.sendMessage("negative-ack");
+                    System.out.println("Sent 'negative-ack' to ClientID=" + clientID);
+                } else {
+                    System.err.println("No ClientHandler found for ClientID=" + clientID);
+                }
             }
 
             // Sleep briefly to avoid busy-waiting
@@ -150,11 +155,7 @@ public class Server {
             try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-                clientID = in.readLine();
-                if (clientID == null || clientID.isEmpty()) {
-                                        clientID = clientSocket.getInetAddress().toString();
-                }
-
+                clientID = clientSocket.getInetAddress().getHostAddress().trim(); // Use IP address as ClientID
                 connectedClients.put(clientID, this);
                 System.out.println("Client registered as: " + clientID);
 
@@ -171,7 +172,8 @@ public class Server {
             } catch (IOException e) {
                 System.err.println("Error handling client: " + e.getMessage());
             } finally {
-                                connectedClients.remove(clientID);
+                connectedClients.remove(clientID);
+                System.out.println("Removed ClientID=" + clientID + " from connectedClients.");
                 try {
                     clientSocket.close();
                 } catch (IOException e) {
@@ -218,17 +220,6 @@ public class Server {
                 }
             } catch (IOException e) {
                 System.err.println("Error sending message: " + e.getMessage());
-            }
-        }
-
-        // Static method to send a message to a specific ClientID
-        public static void sendMessageToClient(String clientID, String message) {
-                        ClientHandler clientHandler = connectedClients.get(clientID);
-            if (clientHandler != null) {
-                                clientHandler.sendMessage(message); // Use the existing ClientHandler to send the message
-                System.out.println("Sent message to ClientID=" + clientID + ": " + message);
-            } else {
-                System.err.println("No ClientHandler found for ClientID =" + clientID);
             }
         }
 

@@ -22,7 +22,6 @@ public class ClientWindow implements ActionListener {
     private int scoreCount = 0;  // Track the score
     private boolean answered = false;  // Flag to track if an answer has been submitted
     
-
     public ClientWindow()
 	{
 		JOptionPane.showMessageDialog(window, "This is a trivia game");
@@ -88,7 +87,7 @@ public class ClientWindow implements ActionListener {
         switch (input) {
             case "Poll":
                 poll.setEnabled(false);  // Disable Poll button
-
+                
                 submit.setEnabled(true);  // Enable Submit button //should only be enabled when positive ack is recieved
                 enableOptions(true);  // Enable options after Poll is clicked
                 client.sendUDP(); //send UDP packet to server
