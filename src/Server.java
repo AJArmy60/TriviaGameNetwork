@@ -194,9 +194,9 @@ public class Server {
         // Handle the submitted answer
         private void handleAnswer(String submittedAnswer) {
             Question currentQuestion = questionHandler.getQuestionArray().get(0); // Get the current question
-            boolean isCorrect = submittedAnswer.equals(currentQuestion.getCorrectAnswer());
 
-            if (isCorrect) {
+            //is the submitted answer the same as the answer in the array
+            if (submittedAnswer == currentQuestion.getCorrectAnswer()) {
                 sendMessage("CORRECT");
                 System.out.println("Client " + clientID + " answered correctly.");
             } else {

@@ -74,6 +74,10 @@ public class ClientWindow implements ActionListener {
         window.setResizable(false);
     }
 
+    public void setVisible(boolean visible) {
+        window.setVisible(visible); // Delegate visibility to the JFrame
+    }
+
     // This method is called when you check/uncheck any radio button or press submit/poll
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -104,28 +108,40 @@ public class ClientWindow implements ActionListener {
         SwingUtilities.invokeLater(() -> {
             // Set the question text
             question.setText(currentQuestion.getQuestion());
-
+    
             // Set the options for the question
             String[] optionsArray = currentQuestion.getOptions();
             for (int i = 0; i < options.length; i++) {
                 options[i].setText(optionsArray[i]);
                 options[i].setEnabled(false); // Disable options at the start of the question
             }
-
+    
             // Reset the Poll and Submit buttons
             poll.setEnabled(true); // Enable Poll button
             submit.setEnabled(false); // Disable Submit button initially
-
+    
             // Start the polling timer (5 seconds for polling)
-            timer.setText("5");
-            pollPhase = true; // Set to polling phase
-            pollClock = new TimerCode(5, this, true); // Pass `true` for polling phase
-            Timer t = new Timer();
-            t.schedule(pollClock, 0, 1000); // Schedule the polling timer to run every second
-
+            startPollingTimer();
+    
             // Reset the answered flag
             answered = false;
         });
+    }
+
+    private void startPollingTimer() {
+        // Cancel any existing timer
+        if (pollClock != null) {
+            pollClock.cancel();
+        }
+    
+        // Reset the timer display
+        timer.setText("5");
+        pollPhase = true; // Set to polling phase
+    
+        // Create and schedule the polling timer
+        pollClock = new TimerCode(5, this, true); // Pass `true` for polling phase
+        Timer t = new Timer();
+        t.schedule(pollClock, 0, 1000); // Schedule the polling timer to run every second
     }
 
     //Handle the submission of an answer
