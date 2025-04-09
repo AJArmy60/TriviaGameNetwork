@@ -92,7 +92,7 @@ public class ClientWindow implements ActionListener {
                 poll.setEnabled(false);  // Disable Poll button
 
                 //submit.setEnabled(true);  // Enable Submit button //should only be enabled when positive ack is recieved
-                enableOptions(true);  // Enable options after Poll is clicked
+                //enableOptions(true);  // Enable options after Poll is clicked
                 client.sendUDP(); //send UDP packet to server
                 break;
             case "Submit":
@@ -286,10 +286,6 @@ public class ClientWindow implements ActionListener {
 
 	//determines which client can answer based off poll
     public void onAckReceived(Boolean ack) {
-        if (pollPhase) {
-            // Ignore ack during polling phase
-            return;
-        }
 
         // During submission phase
         SwingUtilities.invokeLater(() -> {
