@@ -133,9 +133,9 @@ public class ClientWindow implements ActionListener {
 
     private void startPollingTimer() {
         // Cancel any existing timer
-        if (pollClock != null) {
-            pollClock.cancel();
-        }
+        // if (pollClock != null) {
+        //     pollClock.cancel();
+        // }
     
         // Reset the timer display
         timer.setText("5");

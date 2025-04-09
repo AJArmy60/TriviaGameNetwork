@@ -263,22 +263,70 @@ public class Server {
                 questionHandler.questionToString();
                 clientHandler.sendQuestion(currentQuestion);
             }
-            //collects UDP messages during poll period
+            // Start the polling timer (15 seconds for polling)
+            System.out.println("Polling phase started...");
+            ServerTimer pollingTimer = new ServerTimer(15, true);
+            pollingTimer.start();
+
+            // Wait for polling to finish
+            try {
+                pollingTimer.join(); // Wait for the polling timer to finish
+            } catch (InterruptedException e) {
+                System.err.println("Polling timer interrupted: " + e.getMessage());
+            }
+
+            // Process UDP messages
+            System.out.println("Processing UDP messages...");
             new Thread(() -> acceptUDPMessage()).start();
 
-            //wait for poll timer to finish
+            // Start the answering timer (10 seconds for answering)
+            System.out.println("Answering phase started...");
+            ServerTimer answeringTimer = new ServerTimer(10, false);
+            answeringTimer.start();
 
-            //sorts through queue and sends Acks to Client
-            UDPThread queueManager = new UDPThread();
-            new Thread(queueManager).start();
+            // Wait for answering to finish
+            try {
+                answeringTimer.join(); // Wait for the answering timer to finish
+            } catch (InterruptedException e) {
+                System.err.println("Answering timer interrupted: " + e.getMessage());
+            }
 
-            //wait for client's response
-
-            //remove used question so next can be displayed
+            
+            // Remove the used question so the next can be displayed
             questionHandler.nextQuestion();
-
+            System.out.println("Moving to the next question...");
         }
         System.out.println("Game Over!");
         scanner.close();
+    }
+
+    // Timer class to handle the countdown
+    public static class ServerTimer extends Thread {
+        private int duration;
+        private boolean isPollingPhase;
+
+        public ServerTimer(int duration, boolean isPollingPhase) {
+            this.duration = duration;
+            this.isPollingPhase = isPollingPhase;
+        }
+
+        @Override
+        public void run() {
+            while (duration > 0) {
+                System.out.println((isPollingPhase ? "Polling" : "Answering") + " phase timer: " + duration + " seconds remaining...");
+                try {
+                    Thread.sleep(1000); // Wait for 1 second
+                } catch (InterruptedException e) {
+                    System.err.println("Timer interrupted: " + e.getMessage());
+                }
+                duration--;
+            }
+
+            if (isPollingPhase) {
+                System.out.println("Polling phase ended.");
+            } else {
+                System.out.println("Answering phase ended.");
+            }
+        }
     }
 }
