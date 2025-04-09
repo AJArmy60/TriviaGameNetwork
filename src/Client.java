@@ -125,22 +125,23 @@ public class Client {
     }
 
     private void handleServerResponse(String response) {
-        // Handle the server's TCP response (ack or negative-ack)
-        if (response.equals("ack")) {
-            // Received "ack" from the server
+        if (response.startsWith("TIMER:")) {
+            // Extract the remaining time from the message
+            int remainingTime = Integer.parseInt(response.substring(6).trim());
+            clientWindow.updateTimer(remainingTime); // Update the timer in the ClientWindow
+        } else if (response.equals("ack")) {
             clientWindow.onAckReceived(true);
             System.out.println("Received ack from server.");
         } else if (response.equals("negative-ack")) {
-            // Received "negative-ack" from the server
             clientWindow.onAckReceived(false);
             System.out.println("Received negative-ack from server.");
-        } else if (response.equals("game-started!")){
-            clientWindow.enablePollButton(); // Enable the Poll button
+        } else if (response.equals("game-started!")) {
+            clientWindow.enablePollButton();
             System.out.println("Game started! Poll button enabled.");
         } else if (response.equals("CORRECT")) {
-            clientWindow.updateScore(10); // Increment score by 10 for correct answer
+            clientWindow.updateScore(10);
         } else if (response.equals("INCORRECT")) {
-            clientWindow.updateScore(-10); // Decrement score by 10 for incorrect answer
+            clientWindow.updateScore(-10);
         }
     }
 

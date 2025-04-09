@@ -1,2 +1,2 @@
-server_ips=10.115.135.242
+server_ips=10.115.156.45
 port=1000

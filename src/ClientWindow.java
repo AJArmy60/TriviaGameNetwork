@@ -18,12 +18,11 @@ public class ClientWindow implements ActionListener {
     private JFrame window;
 
     //variables for polling timer
-    private TimerTask pollClock;
-    private boolean pollPhase = true; // Track whether it's the polling phase
     
     private int scoreCount = 0;  // Track the score
     private boolean answered = false;  // Flag to track if an answer has been submitted
     
+
     public ClientWindow()
 	{
 		JOptionPane.showMessageDialog(window, "This is a trivia game");
@@ -132,14 +131,14 @@ public class ClientWindow implements ActionListener {
             poll.setEnabled(true); // Enable Poll button
             submit.setEnabled(false); // Disable Submit button initially
     
-            // Start the polling timer (5 seconds for polling)
-            startPollingTimer();
+            // Start the timer for the question (e.g., 30 seconds)
+            //startQuestionTimer(30);
     
             // Reset the answered flag
             answered = false;
         });
     }
-
+/* 
     private void startPollingTimer() {
         // Cancel any existing timer
         if (pollClock != null) {
@@ -155,7 +154,7 @@ public class ClientWindow implements ActionListener {
         Timer t = new Timer();
         t.schedule(pollClock, 0, 1000); // Schedule the polling timer to run every second
     }
-
+*/
     //Handle the submission of an answer
     private void handleAnswerSubmission() {
         String selectedAnswer = null;
@@ -208,7 +207,7 @@ public class ClientWindow implements ActionListener {
             if (duration < 0) {
                 if (isPollingPhase) {
                     // End of polling phase
-                    pollPhase = false; // Switch to submission phase
+                    //pollPhase = false; // Switch to submission phase
                     poll.setEnabled(false); // Disable Poll button
                     clientWindow.enableOptions(false); // Disable options until ack is received
                     this.cancel(); // Stop the polling timer
@@ -262,6 +261,17 @@ public class ClientWindow implements ActionListener {
     public void enablePollButton() {
         SwingUtilities.invokeLater(() -> {
             poll.setEnabled(true); // Enable the Poll button
+        });
+    }
+
+    public void updateTimer(int remainingTime) {
+        SwingUtilities.invokeLater(() -> {
+            if (remainingTime < 6) {
+                timer.setForeground(Color.red); // Change color to red for the last 5 seconds
+            } else {
+                timer.setForeground(Color.black);
+            }
+            timer.setText(String.valueOf(remainingTime)); // Update the timer display
         });
     }
 }

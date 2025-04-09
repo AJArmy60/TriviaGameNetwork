@@ -314,6 +314,12 @@ public class Server {
         public void run() {
             while (duration > 0) {
                 System.out.println((isPollingPhase ? "Polling" : "Answering") + " phase timer: " + duration + " seconds remaining...");
+
+                // Broadcast the remaining time to all clients
+                for (ClientHandler clientHandler : connectedClients.values()) {
+                    clientHandler.sendMessage("TIMER:" + duration);
+                }
+
                 try {
                     Thread.sleep(1000); // Wait for 1 second
                 } catch (InterruptedException e) {
