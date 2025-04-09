@@ -2,8 +2,6 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-import javax.swing.SwingUtilities;
-
 public class Client {
     private static List<String> SERVER_IPS;
     private static int SERVER_PORT;
@@ -69,7 +67,7 @@ public class Client {
                     System.err.println("Error reading server response: " + e.getMessage());
                 }
             }).start();
-    
+            
             // Start another thread to listen for string responses
             new Thread(() -> {
                 try {
@@ -106,7 +104,7 @@ public class Client {
     //takes accepted question from server and passes it to ClientWindow logic
     public void handleReceivedQuestion(Question q){
         // Display the ClientWindow
-        SwingUtilities.invokeLater(() -> clientWindow.setVisible(true));
+        System.out.println("Question receieved");
         clientWindow.showQuestion(q);
         q.getCorrectAnswer();
     }
@@ -174,21 +172,14 @@ public class Client {
     }
 
     public static void main(String[] args) {
-    loadClientConfig("config/clientConfig.txt");
+        loadClientConfig("config/clientConfig.txt");
 
-    // Create the QuestionHandler
-    QuestionHandler questionHandler = new QuestionHandler();
+        // Create the ClientWindow and pass it to the Client
+        ClientWindow window = new ClientWindow();
+        QuestionHandler questionHandler = new QuestionHandler();
+        Client client = new Client(window, questionHandler);
+        window.setClient(client); // Pass the client to the ClientWindow
 
-    // Create the Client instance
-    Client client = new Client(null, questionHandler); // Pass null for ClientWindow initially
-
-    // Connect to the server before creating the ClientWindow
-    client.connectToServer();
-
-    // Create the ClientWindow after the connection is established
-    ClientWindow window = new ClientWindow();
-    SwingUtilities.invokeLater(() -> window.setVisible(false));
-    client.setClientWindow(window); // Set the ClientWindow in the Client instance
-    window.setClient(client); // Pass the Client instance to the ClientWindow
-}
+        client.connectToServer();
+    }
 }

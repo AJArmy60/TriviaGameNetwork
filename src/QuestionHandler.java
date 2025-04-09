@@ -35,9 +35,11 @@ public class QuestionHandler {
     }
 
     public boolean outOfQuestions(){
+        //no questions left
         if(questions.size() == 0){
             return true;
         }
+        //questions left
         return false;
     }
 
@@ -60,5 +62,21 @@ public class QuestionHandler {
 
     public void setCurrentQuestionIndex(int i){
         currentQuestionIndex = i;
+    }
+
+    public void questionToString() {
+        if (!outOfQuestions()) {
+            Question currentQuestion = questions.get(0); // Get the question at index 0
+            StringBuilder sb = new StringBuilder();
+            sb.append("Question: ").append(currentQuestion.getQuestion()).append("\n");
+            sb.append("Options:\n");
+            String[] options = currentQuestion.getOptions();
+            for (int i = 0; i < options.length; i++) {
+                sb.append((char) ('A' + i)).append(". ").append(options[i]).append("\n");
+            }
+            System.out.println(sb.toString()); // Print the formatted question
+        } else {
+            System.out.println("No more questions available.");
+        }
     }
 }

@@ -254,14 +254,17 @@ public class Server {
 
         //game loop is active while the gameState is true and the array still has questions
         while(gameState && !questionHandler.outOfQuestions()){
+            Question currentQuestion = questionHandler.getQuestionArray().get(0);
             //for all clients
+            
             for (ClientHandler clientHandler : connectedClients.values()) {
                 //using clienthandler send a Question to each client at array index 
                 //sends the first index at the questions array, after each question, first index gets removed
-                clientHandler.sendQuestion(questionHandler.getQuestionArray().get(0));
+                questionHandler.questionToString();
+                clientHandler.sendQuestion(currentQuestion);
             }
             //collects UDP messages during poll period
-            acceptUDPMessage();
+            new Thread(() -> acceptUDPMessage()).start();
 
             //wait for poll timer to finish
 
@@ -275,6 +278,7 @@ public class Server {
             questionHandler.nextQuestion();
 
         }
+        System.out.println("Game Over!");
         scanner.close();
     }
 }
