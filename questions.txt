@@ -1,3 +1,4 @@
+Which actress won an Academy Award for her role in "La La Land"?,Jennifer Lawrence,Natalie Portman,Meryl Streep,Emma Stone,Emma Stone
 What year was the first Toy Story released?,1993,1995,1997,1999,1995
 Which actor played Jack in The Titanic?,Brad Pitt,Johnny Depp,Leonardo DiCaprio,Tom Cruise,Leonardo DiCaprio
 What was the time machine in Back To The Future?,The DeLorean,Hot tub,TARDIS,Phone booth,The DeLorean
@@ -7,8 +8,13 @@ What color pill does Neo take in the Matrix?,Blue,Red,Green,Yellow,Red
 In the first Rocky, who does Rocky Balboa fight?,Apollo Creed,Ivan Drago,Adonis Creed,Clubber Lang,Apollo Creed
 What movie has the quote, "Say hello to my little friend"?,Scarface,The Godfather,Goodfellas,Casino,Scarface
 What is in the briefcase in Pulp Fiction?,$100000,A gun,I have no idea,A letter,I have no idea
-Which actress won an Academy Award for her role in "La La Land"?,Jennifer Lawrence,Natalie Portman,Meryl Streep,Emma Stone,Emma Stone
 What is the name of the island in the movie "Jurassic Park"?,Isla Sorna,Isla Nublar,Isla Muerta,Isla Perdida,Isla Nublar
 Who is the main antagonist of The Lord of the Rings Trilogy?,Gandolf,Gollum,Sauron,Frodo,Sauron
 In the movie "Fight Club," what is the first rule of Fight Club?,Always bring a towel,Don't ask questions,Never go to the bathroom alone,You do not talk about Fight Club,You do not talk about Fight Club
-What is Forrest Gump's favorite brand of shrimp that he and Bubba plan to go into business with?,Bayou Best Shrimp,Ocean Catch Shrimp,Bubba Gump Shrimp,Alabama Gulf Shrimp,Bubba Gump Shrimp
+What is Forrest Gump's favorite brand of shrimp that he and Bubba plan to go into business with?,Bubble Gum Shrimp,Ocean Catch Shrimp,Bubba Gump Shrimp,Alabama Gulf Shrimp,Bubba Gump Shrimp
+In what movie does Luke Skywalker lose his hand?,The Empire Strikes Back,Return of the Jedi,A New Hope,Rise of Skywalker,The Empire Strikes Back
+Which of the following characters in "The Lion King" sings the iconic song "Hakuna Matata"?,Timon,Pumbaa,Simba (as a young adult),All of the above,All of the above
+What instrument does Andrew Neiman primarily play in the movie "Whiplash"?,Trumpet,Saxophone,Drums,Piano,Drums
+Recording actor movements for digital character animation is called:,Keyframing,Stop-motion,Motion capture,Rotoscoping,Motion capture
+What is name of the main planet featured in the Dune movies?,Arrakis,Tatooine,Jakku,Caladan,Arrakis
+Who is the main villain of The Batman (2022)?,The Joker,Scarecrow,The Penguin,The Riddler,The Riddler

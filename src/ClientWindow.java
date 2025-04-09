@@ -99,8 +99,12 @@ public class ClientWindow implements ActionListener {
                 return;
             }
 
-            // Set the question text
-            question.setText(currentQuestion.getQuestion());
+            // Wrap the question text if it exceeds a certain length
+            String questionText = currentQuestion.getQuestion();
+            if (questionText.length() > 50) { // Adjust the length threshold as needed
+                questionText = "<html>" + questionText.replaceAll("(.{50})", "$1<br>") + "</html>";
+            }
+            question.setText(questionText);
 
             // Set the options for the question
             String[] optionsArray = currentQuestion.getOptions();
