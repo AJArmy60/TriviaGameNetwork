@@ -9,3 +9,6 @@ What movie has the quote, "Say hello to my little friend"?,Scarface,The Godfathe
 What is in the briefcase in Pulp Fiction?,$100000,A gun,I have no idea,A letter,I have no idea
 Which actress won an Academy Award for her role in "La La Land"?,Jennifer Lawrence,Natalie Portman,Meryl Streep,Emma Stone,Emma Stone
 What is the name of the island in the movie "Jurassic Park"?,Isla Sorna,Isla Nublar,Isla Muerta,Isla Perdida,Isla Nublar
+Who is the main antagonist of The Lord of the Rings Trilogy?,Gandolf,Gollum,Sauron,Frodo,Sauron
+In the movie "Fight Club," what is the first rule of Fight Club?,Always bring a towel,Don't ask questions,Never go to the bathroom alone,You do not talk about Fight Club,You do not talk about Fight Club
+What is Forrest Gump's favorite brand of shrimp that he and Bubba plan to go into business with?,Bayou Best Shrimp,Ocean Catch Shrimp,Bubba Gump Shrimp,Alabama Gulf Shrimp,Bubba Gump Shrimp
