@@ -23,6 +23,7 @@ public class ClientWindow implements ActionListener {
     
     private int scoreCount = 0;  // Track the score
     private boolean answered = false;  // Flag to track if an answer has been submitted
+    private Timer activeTimer; // Track the currently active Timer
     
     public ClientWindow()
 	{
@@ -90,7 +91,7 @@ public class ClientWindow implements ActionListener {
             case "Poll":
                 poll.setEnabled(false);  // Disable Poll button
 
-                submit.setEnabled(true);  // Enable Submit button //should only be enabled when positive ack is recieved
+                //submit.setEnabled(true);  // Enable Submit button //should only be enabled when positive ack is recieved
                 enableOptions(true);  // Enable options after Poll is clicked
                 client.sendUDP(); //send UDP packet to server
                 break;
@@ -113,6 +114,11 @@ public class ClientWindow implements ActionListener {
                 return;
             }
 
+            // Cancel any existing timer
+            if (activeTimer != null) {
+                activeTimer.cancel();
+            }
+
             // Set the question text
             question.setText(currentQuestion.getQuestion());
     
@@ -132,28 +138,58 @@ public class ClientWindow implements ActionListener {
             poll.setEnabled(true); // Enable Poll button
             submit.setEnabled(false); // Disable Submit button initially
     
-            // Start the polling timer (5 seconds for polling)
-            startPollingTimer();
-    
-            // Reset the answered flag
-            answered = false;
+            // Start the question timer (e.g., 20 seconds total: 10 for polling, 10 for submission)
+            startQuestionTimer(20);
         });
     }
 
-    private void startPollingTimer() {
+    private void startQuestionTimer(int totalDuration) {
         // Cancel any existing timer
-        if (pollClock != null) {
-            pollClock.cancel();
+        if (activeTimer != null) {
+            activeTimer.cancel();
         }
-    
+
         // Reset the timer display
-        timer.setText("5");
-        pollPhase = true; // Set to polling phase
-    
-        // Create and schedule the polling timer
-        pollClock = new TimerCode(5, this, true); // Pass `true` for polling phase
-        Timer t = new Timer();
-        t.schedule(pollClock, 0, 1000); // Schedule the polling timer to run every second
+        timer.setText(String.valueOf(totalDuration));
+        pollPhase = true; // Start with the polling phase
+        answered = false; // Reset the answered flag
+
+        // Create and schedule the question timer
+        activeTimer = new Timer();
+        activeTimer.schedule(new TimerTask() {
+            private int remainingTime = totalDuration;
+
+            @Override
+            public void run() {
+                if (remainingTime <= 0) {
+                    // End of question timer
+                    if (pollPhase) {
+                        // Transition from polling to submission phase
+                        pollPhase = false;
+                        poll.setEnabled(false); // Disable Poll button
+                        enableOptions(false); // Disable options until ack is received
+                        remainingTime = totalDuration / 2; // Set remaining time for submission phase
+                        timer.setText(String.valueOf(remainingTime));
+                    } else {
+                        // End of submission phase
+                        if (!answered) {
+                            scoreCount -= 20; // Subtract 20 points if no answer was submitted
+                            SwingUtilities.invokeLater(() -> score.setText("SCORE: " + scoreCount));
+                        }
+                        activeTimer.cancel(); // Stop the timer
+                    }
+                    return;
+                }
+
+                // Update the timer display
+                SwingUtilities.invokeLater(() -> {
+                    timer.setText(String.valueOf(remainingTime));
+                    timer.setForeground(remainingTime <= 5 ? Color.red : Color.black);
+                });
+
+                remainingTime--;
+            }
+        }, 0, 1000); // Schedule the timer to run every second
     }
 
     //Handle the submission of an answer
@@ -212,12 +248,15 @@ public class ClientWindow implements ActionListener {
                     poll.setEnabled(false); // Disable Poll button
                     clientWindow.enableOptions(false); // Disable options until ack is received
                     this.cancel(); // Stop the polling timer
-    
+
                     // Start the submission timer (10 seconds for submission)
                     timer.setText("10");
-                    Timer t = new Timer();
+                    if (activeTimer != null) {
+                        activeTimer.cancel(); // Cancel the previous timer
+                    }
+                    activeTimer = new Timer();
                     clock = new TimerCode(10, clientWindow, false); // Pass `false` for submission phase
-                    t.schedule(clock, 0, 1000); // Schedule the submission timer
+                    activeTimer.schedule(clock, 0, 1000); // Schedule the submission timer
                 } else {
                     // End of submission phase
                     if (!answered) {
@@ -226,6 +265,9 @@ public class ClientWindow implements ActionListener {
                     }
                     //clientWindow.moveToNextQuestion(); // Move to the next question
                     this.cancel(); // Stop the submission timer
+                    if (activeTimer != null) {
+                        activeTimer.cancel(); // Cancel the active timer
+                    }
                 }
                 return;
             }
@@ -244,15 +286,21 @@ public class ClientWindow implements ActionListener {
 
 	//determines which client can answer based off poll
     public void onAckReceived(Boolean ack) {
-		//client is the first in queue, can answer question
-        if (ack) {
-            submit.setEnabled(true);
-			enableOptions(true);
-		//client was late, cannot answer question
-        } else {
-            submit.setEnabled(false);
-			enableOptions(false);
+        if (pollPhase) {
+            // Ignore ack during polling phase
+            return;
         }
+
+        // During submission phase
+        SwingUtilities.invokeLater(() -> {
+            if (ack) {
+                submit.setEnabled(true);
+                enableOptions(true);
+            } else {
+                submit.setEnabled(false);
+                enableOptions(false);
+            }
+        });
     }
 
     public void setClient(Client client) {

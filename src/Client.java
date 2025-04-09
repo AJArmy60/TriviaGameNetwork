@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import javax.swing.SwingUtilities;
+
 public class Client {
     private static List<String> SERVER_IPS;
     private static int SERVER_PORT;
@@ -85,12 +87,11 @@ public class Client {
     }
 
     //takes accepted question from server and passes it to ClientWindow logic
-    public void handleReceivedQuestion(Question q){
-        // Display the ClientWindow
-        questionHandler.toString();
-        System.out.println("Question receieved");
-        clientWindow.showQuestion(q);
-        q.getCorrectAnswer();
+    public void handleReceivedQuestion(Question q) {
+        SwingUtilities.invokeLater(() -> {
+            System.out.println("Question received");
+            clientWindow.showQuestion(q); // Delegate question display and timer handling to ClientWindow
+        });
     }
 
     //sends answer to server

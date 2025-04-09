@@ -58,16 +58,9 @@ public class Server {
                 // Parse the message (expected format: "buzz:<ClientID>:<QuestionNumber>")
                 String[] parts = message.split(":");
                 if (parts.length == 3 && "buzz".equals(parts[0])) {
-                    try {
-                        String clientID = parts[1].trim();
-                        int questionNumber = Integer.parseInt(parts[2].trim());
-
-                        // Add the message to the queue
-                        udpMessageQueue.add(clientID + ":" + questionNumber);
-                        System.out.println("Added to queue: ClientID=" + clientID + ", for QuestionNumber=" + questionNumber);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Invalid question number format in message: " + message);
-                    }
+                    String clientID = parts[1].trim(); // Extract only the ClientID
+                    udpMessageQueue.add(clientID); // Add only the ClientID to the queue
+                    System.out.println("Added to queue: ClientID=" + clientID);
                 } else {
                     System.err.println("Invalid UDP message format: " + message);
                 }
@@ -83,24 +76,20 @@ public class Server {
     public static class UDPThread implements Runnable {
         @Override
         public void run() {
-            // Peek at the first message in the queue without removing it
-            String message = udpMessageQueue.poll();
-            String clientID = getClientID(message);
-            ClientHandler clientHandler = connectedClients.get(clientID);
-            if (clientHandler != null) {
-                clientHandler.sendMessage("ack");
-                System.out.println("Sent 'ack' to ClientID=" + clientID);
+            // Get the first ClientID from the queue
+            String clientID = udpMessageQueue.poll();
+            if (clientID == null) {
+                System.err.println("No messages in the UDP queue.");
+                return;
             }
 
-            // sends negative ack to other clients in queue
+            // Send "ack" to the first ClientID
+            ClientHandler.sendMessageToClient(clientID, "ack");
+
+            // Send "negative-ack" to the rest of the ClientIDs in the queue
             while (!udpMessageQueue.isEmpty()) {
-                message = udpMessageQueue.poll();
-                clientID = getClientID(message);
-                clientHandler = connectedClients.get(clientID);
-                if (clientHandler != null) {
-                    clientHandler.sendMessage("negative-ack");
-                    System.out.println("Sent 'negative-ack' to ClientID=" + clientID);
-                }
+                clientID = udpMessageQueue.poll();
+                ClientHandler.sendMessageToClient(clientID, "negative-ack");
             }
 
             // Sleep briefly to avoid busy-waiting
@@ -115,11 +104,11 @@ public class Server {
     public static String getClientID(String message) {
         if (message != null) {
             String[] parts = message.split(":");
-            String clientID = parts[0]; // Extract the clientID
-            //int questionNumber = Integer.parseInt(parts[1]); // Extract the question number
-            return clientID;
+            if (parts.length >= 2) {
+                return parts[1].trim(); // Extract the clientID (second part of the message)
+            }
         }
-        return "Failed to parse message";
+        return null; // Return null if the message format is invalid
     }
 
     // Load server configuration from the provided file path
@@ -222,6 +211,17 @@ public class Server {
         public void sendMessage(String message) {
             if (out != null) {
                 out.println(message);
+            }
+        }
+
+        // Static method to send a message to a specific ClientID
+        public static void sendMessageToClient(String clientID, String message) {
+            ClientHandler clientHandler = connectedClients.get(clientID);
+            if (clientHandler != null) {
+                clientHandler.sendMessage(message);
+                System.out.println("Sent message to ClientID=" + clientID + ": " + message);
+            } else {
+                System.err.println("No ClientHandler found for ClientID=" + clientID);
             }
         }
 
