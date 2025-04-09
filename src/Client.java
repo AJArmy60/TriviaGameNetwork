@@ -139,6 +139,8 @@ public class Client {
             clientWindow.updateScore(10);
         } else if (response.equals("INCORRECT")) {
             clientWindow.updateScore(-10);
+        } else {
+            clientWindow.updateScore(-20);
         }
     }
 
