@@ -18,6 +18,7 @@ public class ClientWindow implements ActionListener {
     private boolean answered = false;  // Flag to track if an answer has been submitted
     private boolean pollPhase = true;  // Flag to track if we're in the poll phase
     private boolean questionActive = false;  // Flag to track if a question is active (not yet answered)
+    private boolean ackReceived = false;  // Flag to track if ack is received
 
     public ClientWindow() {
         JOptionPane.showMessageDialog(window, "This is a trivia game");
@@ -160,15 +161,15 @@ public class ClientWindow implements ActionListener {
     }
 
     public void onAckReceived(Boolean ack) {
-        // We are now in the answer phase (not the poll phase)
-        if (!pollPhase && ack) {
-            // Polling phase is over, so enable submit button and answer options
+        ackReceived = ack;  // Update the ackReceived flag
+        if (ackReceived) {
+            // Positive ack: enable answer options and Submit button
             submit.setEnabled(true); // Enable the Submit button
             enableOptions(true); // Enable the options for selection
         } else {
-            // If it's still in the poll phase, disable the submit and options buttons
-            submit.setEnabled(false);
-            enableOptions(false);
+            // Negative ack: keep answer options and Submit button disabled
+            submit.setEnabled(false); // Disable the Submit button
+            enableOptions(false); // Disable the options for selection
         }
     }
 
@@ -194,10 +195,14 @@ public class ClientWindow implements ActionListener {
             // Transition to next phase if timer runs out
             if (remainingTime == 0) {
                 if (pollPhase) {
-                    // Poll phase ends - enable Submit button and options
+                    // Poll phase ends - enable Submit button and options if ack was positive
                     pollPhase = false;  // End Poll phase
-                    submit.setEnabled(true);  // Enable Submit button after Poll phase ends
-                    enableOptions(true);  // Enable options after Poll phase ends
+                    if (ackReceived) {
+                        submit.setEnabled(true);  // Enable Submit button after Poll phase ends if ack is positive
+                        enableOptions(true);  // Enable options after Poll phase ends if ack is positive
+                    }
+                    // Disable Poll button after Poll phase ends
+                    poll.setEnabled(false);  // Disable Poll button
                 }
             }
         });
