@@ -11,6 +11,7 @@ public class Server {
     private static int UDP_PORT = 2000; // port for UDP
     private static ConcurrentLinkedQueue<String> udpMessageQueue = new ConcurrentLinkedQueue<>();
     private static ConcurrentHashMap<String, ClientHandler> connectedClients = new ConcurrentHashMap<>(); // keeps track of clients
+    private static ConcurrentHashMap<String, Integer> clientScores = new ConcurrentHashMap<>();
     private static QuestionHandler questionHandler = new QuestionHandler();
     private static boolean gameState;
 
@@ -184,14 +185,16 @@ public class Server {
         // Handle the submitted answer
         private void handleAnswer(String submittedAnswer) {
             Question currentQuestion = questionHandler.getQuestionArray().get(0); // Get the current question
-
-            //is the submitted answer the same as the answer in the array
+        
+            // Check if the submitted answer is correct
             if (submittedAnswer.equals(currentQuestion.getCorrectAnswer())) {
                 sendMessage("CORRECT");
                 System.out.println("Client " + clientID + " answered correctly.");
+                clientScores.merge(clientID, 10, Integer::sum); // Add 10 points for a correct answer
             } else {
                 sendMessage("INCORRECT");
                 System.out.println("Client " + clientID + " answered incorrectly.");
+                clientScores.merge(clientID, -10, Integer::sum); // Deduct 5 points for an incorrect answer
             }
         }
 
@@ -290,6 +293,13 @@ public class Server {
             } catch (InterruptedException e) {
                 System.err.println("Answering timer interrupted: " + e.getMessage());
             }
+            // Print the scores of all clients
+            System.out.println("Current Scores:");
+            clientScores.forEach((clientID, score) -> {
+                System.out.println("---------------------------------------------------------------------");
+                System.out.println("ClientID: " + clientID + ", Score: " + score);
+                System.out.println("---------------------------------------------------------------------");
+            });
 
             // Remove the used question so the next can be displayed
             questionHandler.nextQuestion();
