@@ -1,5 +1,5 @@
 What year was the first Toy Story released?,1993,1995,1997,1999,1995
-Which actor played Jack in The Titanic?,Brad Pitt,Johnny Depp,Leonardo DiCaprio,Tom Cruise,Leondaro DiCaprio
+Which actor played Jack in The Titanic?,Brad Pitt,Johnny Depp,Leonardo DiCaprio,Tom Cruise,Leonardo DiCaprio
 What was the time machine in Back To The Future?,The DeLorean,Hot tub,TARDIS,Phone booth,The DeLorean
 Who voiced the Genie in Aladdin?,Jim Carrey,Eddie Murphy,Robin Williams,Mike Myers,Robin Williams
 Who is the coolest superhero?,Not Antman,Not Antman,Not Antman,Antman,Antman

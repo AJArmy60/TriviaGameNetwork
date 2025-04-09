@@ -196,7 +196,7 @@ public class Server {
             Question currentQuestion = questionHandler.getQuestionArray().get(0); // Get the current question
 
             //is the submitted answer the same as the answer in the array
-            if (submittedAnswer == currentQuestion.getCorrectAnswer()) {
+            if (submittedAnswer.equals(currentQuestion.getCorrectAnswer())) {
                 sendMessage("CORRECT");
                 System.out.println("Client " + clientID + " answered correctly.");
             } else {
