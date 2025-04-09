@@ -150,8 +150,8 @@ public class ClientWindow implements ActionListener {
     }
 
     public void updateScore(int delta) {
-        scoreCount += delta;
-        SwingUtilities.invokeLater(() -> score.setText("SCORE: " + scoreCount));
+        scoreCount += delta; // Update the score count
+        SwingUtilities.invokeLater(() -> score.setText("SCORE: " + scoreCount)); // Update the score label
     }
 
     private void enableOptions(boolean enable) {
@@ -203,6 +203,11 @@ public class ClientWindow implements ActionListener {
                     }
                     // Disable Poll button after Poll phase ends
                     poll.setEnabled(false);  // Disable Poll button
+                }
+                // If we are in the answer phase and the user has not answered, apply penalty
+                if (!answered) {
+                    updateScore(-20);  // Deduct 20 points if no answer is submitted
+                    JOptionPane.showMessageDialog(window, "Time's up! 20 points deducted for not answering.");
                 }
             }
         });

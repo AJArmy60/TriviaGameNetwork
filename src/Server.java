@@ -136,6 +136,8 @@ public class Server {
         private ObjectOutputStream objectOut; // Used to send objects to the client
         private PrintWriter out; // Used to send messages to the client
         private String clientID; // Client ID
+        private String submittedAnswer = null; // Track submitted answer
+        private boolean hasAnswered = false;   // Flag to track if the client has already answered
 
         // Constructor to initialize the client socket
         public ClientHandler(Socket clientSocket) {
@@ -164,8 +166,9 @@ public class Server {
 
                     // Handle submitted answers
                     if (clientMessage.startsWith("ANSWER:")) {
-                        String submittedAnswer = clientMessage.substring(7).trim();
-                        handleAnswer(submittedAnswer);
+                        submittedAnswer = clientMessage.substring(7).trim();
+                        hasAnswered = true; // Mark that the client has submitted an answer
+                        handleAnswer(submittedAnswer);  // Handle the answer submission
                     }
                 }
             } catch (IOException e) {
@@ -185,13 +188,17 @@ public class Server {
         private void handleAnswer(String submittedAnswer) {
             Question currentQuestion = questionHandler.getQuestionArray().get(0); // Get the current question
 
-            //is the submitted answer the same as the answer in the array
-            if (submittedAnswer.equals(currentQuestion.getCorrectAnswer())) {
-                sendMessage("CORRECT");
-                System.out.println("Client " + clientID + " answered correctly.");
+            if (submittedAnswer != null && !submittedAnswer.isEmpty()) {
+                if (submittedAnswer.equals(currentQuestion.getCorrectAnswer())) {
+                    sendMessage("CORRECT");
+                    System.out.println("Client " + clientID + " answered correctly.");
+                } else {
+                    sendMessage("INCORRECT");
+                    System.out.println("Client " + clientID + " answered incorrectly.");
+                }
             } else {
-                sendMessage("INCORRECT");
-                System.out.println("Client " + clientID + " answered incorrectly.");
+                sendMessage("TIMEOUT");
+                System.out.println("Client " + clientID + " did not submit an answer.");
             }
         }
 
@@ -231,7 +238,7 @@ public class Server {
         return gameState;
     }
 
-    //handles game logic 
+    // handles game logic 
     public static void gameStart() {
         Scanner scanner = new Scanner(System.in);
 
@@ -331,6 +338,12 @@ public class Server {
                 System.out.println("Polling phase ended.");
             } else {
                 System.out.println("Answering phase ended.");
+                // If the client didn't submit an answer, handle TIMEOUT for each client
+                for (ClientHandler clientHandler : connectedClients.values()) {
+                    if (!clientHandler.hasAnswered) {
+                        clientHandler.sendMessage("TIMEOUT");
+                    }
+                }
             }
         }
     }

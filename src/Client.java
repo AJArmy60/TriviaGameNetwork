@@ -15,11 +15,12 @@ public class Client {
     private ClientWindow clientWindow; // Reference to the ClientWindow
     private QuestionHandler questionHandler;
     private ObjectInputStream objectIn; // Used to receive objects from the server
-    
+    private boolean hasAnswered; // Flag to track if the client has answered
 
     public Client(ClientWindow clientWindow, QuestionHandler questionHandler) {
         this.clientWindow = clientWindow;
         this.questionHandler = questionHandler;
+        this.hasAnswered = false; // Initially, the client hasn't answered
     }
 
     private static void loadClientConfig(String filePath) {
@@ -77,20 +78,22 @@ public class Client {
         }
     }
 
-    //takes accepted question from server and passes it to ClientWindow logic
+    // Takes accepted question from server and passes it to ClientWindow logic
     public void handleReceivedQuestion(Question q) {
         SwingUtilities.invokeLater(() -> {
             System.out.println("Question received");
+            hasAnswered = false; // Reset answer flag when a new question is received
             clientWindow.showQuestion(q); // Delegate question display and timer handling to ClientWindow
         });
     }
 
-    //sends answer to server
+    // Sends answer to server
     public void submitAnswer(String answer) {
         try {
             if (out != null) {
                 out.println("ANSWER:" + answer); // Send the answer to the server
                 System.out.println("Submitted answer: " + answer);
+                hasAnswered = true; // Mark as answered
             }
         } catch (Exception e) {
             System.err.println("Error submitting answer: " + e.getMessage());
@@ -102,7 +105,6 @@ public class Client {
             DatagramSocket udpSocket = new DatagramSocket();
 
             // Use only the IP address as the ClientID
-
             String clientID = socket.getLocalAddress().getHostAddress();
             byte[] buffer = clientID.getBytes(); // Send only the ClientID
 
@@ -133,12 +135,15 @@ public class Client {
         } else if (response.equals("game-started!")) {
             clientWindow.enablePollButton();
             System.out.println("Game started! Poll button enabled.");
-
-        //handle score
+        // Handle score response
         } else if (response.equals("CORRECT")) {
             clientWindow.updateScore(10);
         } else if (response.equals("INCORRECT")) {
             clientWindow.updateScore(-10);
+        } else if (response.equals("TIMEOUT")) {
+            // Deduct 20 points if the client did not answer
+            clientWindow.updateScore(-20);
+            System.out.println("Time expired. No answer submitted. 20 points deducted.");
         } else {
             clientWindow.updateScore(-20);
         }
