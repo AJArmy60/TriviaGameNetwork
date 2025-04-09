@@ -72,7 +72,6 @@ public class Server {
     }
 
     // handles UDP message queue in separate thread
-    // must be called once per each time the queue is full
     public static class UDPThread implements Runnable {
         @Override
         public void run() {
@@ -152,7 +151,7 @@ public class Server {
 
                 clientID = in.readLine();
                 if (clientID == null || clientID.isEmpty()) {
-                                        clientID = clientSocket.getInetAddress().toString();
+                    clientID = clientSocket.getInetAddress().toString();
                 }
 
                 connectedClients.put(clientID, this);
@@ -171,7 +170,7 @@ public class Server {
             } catch (IOException e) {
                 System.err.println("Error handling client: " + e.getMessage());
             } finally {
-                                connectedClients.remove(clientID);
+                connectedClients.remove(clientID);
                 try {
                     clientSocket.close();
                 } catch (IOException e) {
@@ -207,7 +206,7 @@ public class Server {
                 System.err.println("Error sending question: " + e.getMessage());
             }
         }
-        
+
         // Sends a message to this client
         public void sendMessage(String message) {
             try {
@@ -223,9 +222,9 @@ public class Server {
 
         // Static method to send a message to a specific ClientID
         public static void sendMessageToClient(String clientID, String message) {
-                        ClientHandler clientHandler = connectedClients.get(clientID);
+            ClientHandler clientHandler = connectedClients.get(clientID);
             if (clientHandler != null) {
-                                clientHandler.sendMessage(message); // Use the existing ClientHandler to send the message
+                clientHandler.sendMessage(message); // Use the existing ClientHandler to send the message
                 System.out.println("Sent message to ClientID=" + clientID + ": " + message);
             } else {
                 System.err.println("No ClientHandler found for ClientID =" + clientID);
@@ -263,7 +262,6 @@ public class Server {
         while(gameState && !questionHandler.outOfQuestions()){
             Question currentQuestion = questionHandler.getQuestionArray().get(0);
             //for all clients
-            
             for (ClientHandler clientHandler : connectedClients.values()) {
                 //using clienthandler send a Question to each client at array index 
                 //sends the first index at the questions array, after each question, first index gets removed
@@ -271,9 +269,9 @@ public class Server {
                 clientHandler.sendQuestion(currentQuestion);
             }
 
-            // Start the polling timer (15 seconds for polling)
+            // Start the polling timer (10 seconds for polling)
             System.out.println("Polling phase started...");
-            ServerTimer pollingTimer = new ServerTimer(15, true);
+            ServerTimer pollingTimer = new ServerTimer(10, true);
             pollingTimer.start();
 
             // Process UDP messages
@@ -286,7 +284,6 @@ public class Server {
             } catch (InterruptedException e) {
                 System.err.println("Polling timer interrupted: " + e.getMessage());
             }
-
 
             //after polling ends process the UDP messages
             UDPThread udpThread = new UDPThread();
@@ -304,7 +301,6 @@ public class Server {
                 System.err.println("Answering timer interrupted: " + e.getMessage());
             }
 
-            
             // Remove the used question so the next can be displayed
             questionHandler.nextQuestion();
             System.out.println("Moving to the next question...");

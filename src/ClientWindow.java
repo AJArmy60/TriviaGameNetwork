@@ -1,8 +1,6 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Timer;
-import java.util.TimerTask;
 import javax.swing.*;
 
 public class ClientWindow implements ActionListener {
@@ -14,87 +12,73 @@ public class ClientWindow implements ActionListener {
     private JLabel question;
     private JLabel timer;
     private JLabel score;
-    private TimerTask clock;
     private JFrame window;
 
-    //variables for polling timer
-    
     private int scoreCount = 0;  // Track the score
     private boolean answered = false;  // Flag to track if an answer has been submitted
     
+    public ClientWindow() {
+        JOptionPane.showMessageDialog(window, "This is a trivia game");
 
-    public ClientWindow()
-	{
-		JOptionPane.showMessageDialog(window, "This is a trivia game");
-		
-		window = new JFrame("Trivia");
-		question = new JLabel("Q1. This is a sample question"); // represents the question
-		window.add(question);
-		question.setBounds(10, 5, 350, 100);;
-		
-		options = new JRadioButton[4];
-		optionGroup = new ButtonGroup();
-		for(int index=0; index<options.length; index++)
-		{
-			options[index] = new JRadioButton("Option " + (index+1));  // represents an option
-			// if a radio button is clicked, the event would be thrown to this class to handle
-			options[index].addActionListener(this);
-			options[index].setBounds(10, 110+(index*20), 350, 20);
-			window.add(options[index]);
-			optionGroup.add(options[index]);
-		}
+        window = new JFrame("Trivia");
+        question = new JLabel("Q1. This is a sample question"); // represents the question
+        window.add(question);
+        question.setBounds(10, 5, 350, 100);
+        
+        options = new JRadioButton[4];
+        optionGroup = new ButtonGroup();
+        for(int index = 0; index < options.length; index++) {
+            options[index] = new JRadioButton("Option " + (index + 1));  // represents an option
+            options[index].addActionListener(this);
+            options[index].setBounds(10, 110 + (index * 20), 350, 20);
+            window.add(options[index]);
+            optionGroup.add(options[index]);
+        }
 
-		timer = new JLabel("TIMER");  // represents the countdown shown on the window
-		timer.setBounds(250, 250, 100, 20);
-		clock = new TimerCode(30, this, true);  // represents clocked task that should run after X seconds
-		Timer t = new Timer();  // event generator
-		t.schedule(clock, 0, 1000); // clock is called every second
-		window.add(timer);
-		
-		
-		score = new JLabel("SCORE"); // represents the score
-		score.setBounds(50, 250, 100, 20);
-		window.add(score);
+        timer = new JLabel("TIMER");
+        timer.setBounds(250, 250, 100, 20);
+        window.add(timer);
 
-		poll = new JButton("Poll");  // button that use clicks/ like a buzzer
-		poll.setBounds(10, 300, 100, 20);
-		poll.addActionListener(this);  // calls actionPerformed of this class
-		window.add(poll);
-		
-		submit = new JButton("Submit");  // button to submit their answer
-		submit.setBounds(200, 300, 100, 20);
-		submit.addActionListener(this);  // calls actionPerformed of this class
-		window.add(submit);
-		
-		
-		window.setSize(400,400);
-		window.setBounds(50, 50, 400, 400);
-		window.setLayout(null);
-		window.setVisible(true);
-		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		window.setResizable(false);
-	}
+        score = new JLabel("SCORE");
+        score.setBounds(50, 250, 100, 20);
+        window.add(score);
+
+        poll = new JButton("Poll");
+        poll.setBounds(10, 300, 100, 20);
+        poll.addActionListener(this);
+        window.add(poll);
+
+        submit = new JButton("Submit");
+        submit.setBounds(200, 300, 100, 20);
+        submit.addActionListener(this);
+        window.add(submit);
+
+        window.setSize(400, 400);
+        window.setBounds(50, 50, 400, 400);
+        window.setLayout(null);
+        window.setVisible(true);
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        window.setResizable(false);
+    }
 
     public void setVisible(boolean visible) {
         window.setVisible(visible); // Delegate visibility to the JFrame
     }
 
-    // This method is called when you check/uncheck any radio button or press submit/poll
     @Override
     public void actionPerformed(ActionEvent e) {
         System.out.println("You clicked " + e.getActionCommand());
-    
+
         String input = e.getActionCommand();
         switch (input) {
             case "Poll":
                 poll.setEnabled(false);  // Disable Poll button
-
-                submit.setEnabled(true);  // Enable Submit button //should only be enabled when positive ack is recieved
+                submit.setEnabled(true);  // Enable Submit button
                 enableOptions(true);  // Enable options after Poll is clicked
-                client.sendUDP(); //send UDP packet to server
+                client.sendUDP(); // Send UDP packet to server
                 break;
             case "Submit":
-                handleAnswerSubmission();  // Check if the selected answer is correct and update score
+                handleAnswerSubmission();  // Handle the answer submission
                 poll.setEnabled(false);  // Disable Poll button after Submit
                 submit.setEnabled(false);  // Disable Submit button after submission
                 enableOptions(false);  // Disable options after Submit
@@ -104,7 +88,6 @@ public class ClientWindow implements ActionListener {
         }
     }
 
-    // Show the given Question object
     public void showQuestion(Question currentQuestion) {
         SwingUtilities.invokeLater(() -> {
             if (currentQuestion == null) {
@@ -114,7 +97,7 @@ public class ClientWindow implements ActionListener {
 
             // Set the question text
             question.setText(currentQuestion.getQuestion());
-    
+
             // Set the options for the question
             String[] optionsArray = currentQuestion.getOptions();
             if (optionsArray == null || optionsArray.length != options.length) {
@@ -126,39 +109,19 @@ public class ClientWindow implements ActionListener {
                 options[i].setText(optionsArray[i]);
                 options[i].setEnabled(false); // Disable options at the start of the question
             }
-    
+
             // Reset the Poll and Submit buttons
             poll.setEnabled(true); // Enable Poll button
             submit.setEnabled(false); // Disable Submit button initially
-    
-            // Start the timer for the question (e.g., 30 seconds)
-            //startQuestionTimer(30);
-    
+
             // Reset the answered flag
             answered = false;
         });
     }
-/* 
-    private void startPollingTimer() {
-        // Cancel any existing timer
-        if (pollClock != null) {
-            pollClock.cancel();
-        }
-    
-        // Reset the timer display
-        timer.setText("5");
-        pollPhase = true; // Set to polling phase
-    
-        // Create and schedule the polling timer
-        pollClock = new TimerCode(5, this, true); // Pass `true` for polling phase
-        Timer t = new Timer();
-        t.schedule(pollClock, 0, 1000); // Schedule the polling timer to run every second
-    }
-*/
-    //Handle the submission of an answer
+
     private void handleAnswerSubmission() {
         String selectedAnswer = null;
-    
+
         // Find the selected option
         for (int i = 0; i < options.length; i++) {
             if (options[i].isSelected()) {
@@ -166,7 +129,7 @@ public class ClientWindow implements ActionListener {
                 break;
             }
         }
-    
+
         if (selectedAnswer != null) {
             answered = true; // Mark the question as answered
             client.submitAnswer(selectedAnswer); // Send the selected answer to the Client class
@@ -183,74 +146,20 @@ public class ClientWindow implements ActionListener {
         SwingUtilities.invokeLater(() -> score.setText("SCORE: " + scoreCount));
     }
 
-    // Enable or disable the options based on the argument
     private void enableOptions(boolean enable) {
         for (int i = 0; i < options.length; i++) {
             options[i].setEnabled(enable);
         }
     }
 
-    // Timer class to handle the countdown
-    public class TimerCode extends TimerTask {
-        private int duration;
-        private ClientWindow clientWindow;
-        private boolean isPollingPhase; // Track whether this is the polling phase
-    
-        public TimerCode(int duration, ClientWindow clientWindow, boolean isPollingPhase) {
-            this.duration = duration;
-            this.clientWindow = clientWindow;
-            this.isPollingPhase = isPollingPhase;
-        }
-    
-        @Override
-        public void run() {
-            if (duration < 0) {
-                if (isPollingPhase) {
-                    // End of polling phase
-                    //pollPhase = false; // Switch to submission phase
-                    poll.setEnabled(false); // Disable Poll button
-                    clientWindow.enableOptions(false); // Disable options until ack is received
-                    this.cancel(); // Stop the polling timer
-    
-                    // Start the submission timer (10 seconds for submission)
-                    timer.setText("10");
-                    Timer t = new Timer();
-                    clock = new TimerCode(10, clientWindow, false); // Pass `false` for submission phase
-                    t.schedule(clock, 0, 1000); // Schedule the submission timer
-                } else {
-                    // End of submission phase
-                    if (!answered) {
-                        scoreCount -= 20; // Subtract 20 points if no answer was submitted
-                        score.setText("SCORE: " + scoreCount);
-                    }
-                    //clientWindow.moveToNextQuestion(); // Move to the next question
-                    this.cancel(); // Stop the submission timer
-                }
-                return;
-            }
-    
-            // Update the timer display
-            if (duration < 6)
-                clientWindow.timer.setForeground(Color.red);
-            else
-                clientWindow.timer.setForeground(Color.black);
-    
-            clientWindow.timer.setText(duration + "");
-            duration--;
-            clientWindow.window.repaint();
-        }
-    }
-
-	//determines which client can answer based off poll
     public void onAckReceived(Boolean ack) {
-		//client is the first in queue, can answer question
+        // Client is the first in queue, can answer the question
         if (ack) {
             submit.setEnabled(true);
-			enableOptions(true);
-		//client was late, cannot answer question
+            enableOptions(true);
         } else {
             submit.setEnabled(false);
-			enableOptions(false);
+            enableOptions(false);
         }
     }
 
