@@ -1,7 +1,6 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
-
 import javax.swing.SwingUtilities;
 
 public class Client {
@@ -104,13 +103,14 @@ public class Client {
 
             // Use only the IP address as the ClientID
             String clientID = socket.getLocalAddress().getHostAddress();
-            byte[] buffer = clientID.getBytes(); // Send only the ClientID
+            String message = "buzz:" + clientID; // Standardized message format
+            byte[] buffer = message.getBytes();
 
             InetAddress serverAddress = InetAddress.getByName(SERVER_IPS.get(0));
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, UDP_PORT);
             udpSocket.send(packet);
 
-            System.out.println("UDP packet sent: ClientID=" + clientID);
+            System.out.println("UDP packet sent: " + message);
             udpSocket.close();
         } catch (IOException e) {
             System.err.println("Error sending UDP packet: " + e.getMessage());

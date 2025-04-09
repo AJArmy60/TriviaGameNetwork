@@ -16,7 +16,9 @@ public class ClientWindow implements ActionListener {
 
     private int scoreCount = 0;  // Track the score
     private boolean answered = false;  // Flag to track if an answer has been submitted
-    
+    private boolean pollPhase = true;  // Flag to track if we're in the poll phase
+    private boolean questionActive = false;  // Flag to track if a question is active (not yet answered)
+
     public ClientWindow() {
         JOptionPane.showMessageDialog(window, "This is a trivia game");
 
@@ -24,10 +26,10 @@ public class ClientWindow implements ActionListener {
         question = new JLabel("Q1. This is a sample question"); // represents the question
         window.add(question);
         question.setBounds(10, 5, 350, 100);
-        
+
         options = new JRadioButton[4];
         optionGroup = new ButtonGroup();
-        for(int index = 0; index < options.length; index++) {
+        for (int index = 0; index < options.length; index++) {
             options[index] = new JRadioButton("Option " + (index + 1));  // represents an option
             options[index].addActionListener(this);
             options[index].setBounds(10, 110 + (index * 20), 350, 20);
@@ -72,11 +74,10 @@ public class ClientWindow implements ActionListener {
         String input = e.getActionCommand();
         switch (input) {
             case "Poll":
+                // Poll Phase - Disable Poll button, Enable options and Submit after Poll Timer ends
                 poll.setEnabled(false);  // Disable Poll button
-                
-                submit.setEnabled(true);  // Enable Submit button //should only be enabled when positive ack is recieved
-                submit.setEnabled(true);  // Enable Submit button
-                enableOptions(true);  // Enable options after Poll is clicked
+                submit.setEnabled(false);  // Keep Submit button disabled during Poll phase
+                enableOptions(false);  // Disable options during Poll phase
                 client.sendUDP(); // Send UDP packet to server
                 break;
             case "Submit":
@@ -113,11 +114,15 @@ public class ClientWindow implements ActionListener {
             }
 
             // Reset the Poll and Submit buttons
-            poll.setEnabled(true); // Enable Poll button
+            poll.setEnabled(true); // Enable Poll button at the start
             submit.setEnabled(false); // Disable Submit button initially
 
             // Reset the answered flag
             answered = false;
+            questionActive = true;  // Mark the question as active
+
+            // Set the Poll Phase flag to true
+            pollPhase = true;
         });
     }
 
@@ -155,11 +160,13 @@ public class ClientWindow implements ActionListener {
     }
 
     public void onAckReceived(Boolean ack) {
-        // Client is the first in queue, can answer the question
-        if (ack) {
-            submit.setEnabled(true);
-            enableOptions(true);
+        // We are now in the answer phase (not the poll phase)
+        if (!pollPhase) {
+            // Polling phase is over, so enable submit button and answer options
+            submit.setEnabled(true); // Enable the Submit button
+            enableOptions(true); // Enable the options for selection
         } else {
+            // If it's still in the poll phase, disable the submit and options buttons
             submit.setEnabled(false);
             enableOptions(false);
         }
@@ -183,6 +190,16 @@ public class ClientWindow implements ActionListener {
                 timer.setForeground(Color.black);
             }
             timer.setText(String.valueOf(remainingTime)); // Update the timer display
+
+            // Transition to next phase if timer runs out
+            if (remainingTime == 0) {
+                if (pollPhase) {
+                    // Poll phase ends - enable Submit button and options
+                    pollPhase = false;  // End Poll phase
+                    submit.setEnabled(true);  // Enable Submit button after Poll phase ends
+                    enableOptions(true);  // Enable options after Poll phase ends
+                }
+            }
         });
     }
 }
