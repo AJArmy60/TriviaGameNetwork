@@ -59,11 +59,13 @@ public class ClientWindow implements ActionListener {
         poll = new JButton("Poll");
         poll.setBounds(10, 300, 100, 20);
         poll.addActionListener(this);
+        poll.setEnabled(false);
         window.add(poll);
 
         submit = new JButton("Submit");
         submit.setBounds(200, 300, 100, 20);
         submit.addActionListener(this);
+        submit.setEnabled(false);  // Disable Submit button initially
         window.add(submit);
 
         window.setSize(400, 400);
@@ -72,6 +74,7 @@ public class ClientWindow implements ActionListener {
         window.setVisible(true);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
+        
     }
 
     // This method is called when you check/uncheck any radio button or press submit/poll
@@ -229,5 +232,11 @@ public class ClientWindow implements ActionListener {
 
     public void setClient(Client client) {
         this.client = client;
+    }
+
+    public void enablePollButton() {
+        SwingUtilities.invokeLater(() -> {
+            poll.setEnabled(true); // Enable the Poll button
+        });
     }
 }

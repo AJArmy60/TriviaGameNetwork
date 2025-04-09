@@ -247,6 +247,11 @@ public class Server {
         gameState = true;
         System.out.println("Game started!");
 
+        for (ClientHandler clientHandler : connectedClients.values()) {
+            //send message to all clients that game has started
+            clientHandler.sendMessage("game-started!");
+        }
+
         //game loop is active while the gameState is true and the array still has questions
         while(gameState && !questionHandler.outOfQuestions()){
             //for all clients
