@@ -43,23 +43,35 @@ public class Client {
             // Establish a TCP connection to the server
             socket = new Socket(SERVER_IPS.get(0), SERVER_PORT);
             out = new PrintWriter(socket.getOutputStream(), true); // For sending strings
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream())); // For receiving strings
-            objectIn = new ObjectInputStream(socket.getInputStream()); // For receiving objects
-    
+
+            // Wrap the InputStream with BufferedInputStream to support mark/reset
+            BufferedInputStream bufferedInput = new BufferedInputStream(socket.getInputStream());
+            in = new BufferedReader(new InputStreamReader(bufferedInput)); // For receiving strings
+            objectIn = new ObjectInputStream(bufferedInput); // For receiving objects
+
             System.out.println("Connected to server.");
             out.println("Client connected: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort());
-    
+
             // Start a thread to listen for server responses
             new Thread(() -> {
                 try {
                     while (true) {
-                        // Check if the server sent a string or an object
-                        if (socket.getInputStream().available() > 0) {
-                            Object receivedObject = objectIn.readObject();
-                            if (receivedObject instanceof Question) {
-                                // Handle the received Question object
-                                Question question = (Question) receivedObject;
-                                handleReceivedQuestion(question);
+                        // Peek at the stream to determine if it's an object or a string
+                        if (bufferedInput.available() > 0) {
+                            bufferedInput.mark(1); // Mark the current position in the stream
+                            int typeCode = bufferedInput.read(); // Read the first byte
+                            bufferedInput.reset(); // Reset to the marked position
+
+                            if (typeCode == ObjectStreamConstants.TC_OBJECT) {
+                                // It's an object, read it using ObjectInputStream
+                                Object receivedObject = objectIn.readObject();
+                                if (receivedObject instanceof Question) {
+                                    handleReceivedQuestion((Question) receivedObject);
+                                }
+                            } else {
+                                // It's a string, read it using BufferedReader
+                                String response = in.readLine();
+                                handleServerResponse(response);
                             }
                         }
                     }
@@ -67,35 +79,6 @@ public class Client {
                     System.err.println("Error reading server response: " + e.getMessage());
                 }
             }).start();
-            
-            // Start another thread to listen for string responses
-            new Thread(() -> {
-                try {
-                    String response;
-                    while ((response = in.readLine()) != null) {
-                        handleServerResponse(response); // Handle the server's string response
-                    }
-                } catch (IOException e) {
-                    System.err.println("Error reading server response: " + e.getMessage());
-                }
-            }).start();
-
-            //another thread to handle answer feedback from server
-            new Thread(() -> {
-                try {
-                    String response;
-                    while ((response = in.readLine()) != null) {
-                        if (response.equals("CORRECT")) {
-                            clientWindow.updateScore(10); // Increment score by 10 for correct answer
-                        } else if (response.equals("INCORRECT")) {
-                            clientWindow.updateScore(-10); // Decrement score by 10 for incorrect answer
-                        }
-                    }
-                } catch (IOException e) {
-                    System.err.println("Error reading server response: " + e.getMessage());
-                }
-            }).start();
-    
         } catch (IOException e) {
             System.err.println("Error connecting to server: " + e.getMessage());
         }
@@ -104,6 +87,7 @@ public class Client {
     //takes accepted question from server and passes it to ClientWindow logic
     public void handleReceivedQuestion(Question q){
         // Display the ClientWindow
+        questionHandler.toString();
         System.out.println("Question receieved");
         clientWindow.showQuestion(q);
         q.getCorrectAnswer();
@@ -153,6 +137,10 @@ public class Client {
         } else if (response.equals("game-started!")){
             clientWindow.enablePollButton(); // Enable the Poll button
             System.out.println("Game started! Poll button enabled.");
+        } else if (response.equals("CORRECT")) {
+            clientWindow.updateScore(10); // Increment score by 10 for correct answer
+        } else if (response.equals("INCORRECT")) {
+            clientWindow.updateScore(-10); // Decrement score by 10 for incorrect answer
         }
     }
 

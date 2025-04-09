@@ -1,11 +1,6 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.*;
@@ -29,53 +24,57 @@ public class ClientWindow implements ActionListener {
     private int scoreCount = 0;  // Track the score
     private boolean answered = false;  // Flag to track if an answer has been submitted
     
-    public ClientWindow() {
-        // Setup the GUI...
-        
-        window = new JFrame("Trivia");
-        question = new JLabel("Q1. This is a sample question");
-        window.add(question);
-        question.setBounds(10, 5, 350, 100);
+    public ClientWindow()
+	{
+		JOptionPane.showMessageDialog(window, "This is a trivia game");
+		
+		window = new JFrame("Trivia");
+		question = new JLabel("Q1. This is a sample question"); // represents the question
+		window.add(question);
+		question.setBounds(10, 5, 350, 100);;
+		
+		options = new JRadioButton[4];
+		optionGroup = new ButtonGroup();
+		for(int index=0; index<options.length; index++)
+		{
+			options[index] = new JRadioButton("Option " + (index+1));  // represents an option
+			// if a radio button is clicked, the event would be thrown to this class to handle
+			options[index].addActionListener(this);
+			options[index].setBounds(10, 110+(index*20), 350, 20);
+			window.add(options[index]);
+			optionGroup.add(options[index]);
+		}
 
-        options = new JRadioButton[4];
-        optionGroup = new ButtonGroup();
-        for (int index = 0; index < options.length; index++) {
-            options[index] = new JRadioButton("Option " + (index + 1));  
-            options[index].addActionListener(this);
-            options[index].setBounds(10, 110 + (index * 20), 350, 20);
-            window.add(options[index]);
-            optionGroup.add(options[index]);
-            options[index].setEnabled(false);  // Disable options initially
-        }
+		timer = new JLabel("TIMER");  // represents the countdown shown on the window
+		timer.setBounds(250, 250, 100, 20);
+		clock = new TimerCode(30, this, true);  // represents clocked task that should run after X seconds
+		Timer t = new Timer();  // event generator
+		t.schedule(clock, 0, 1000); // clock is called every second
+		window.add(timer);
+		
+		
+		score = new JLabel("SCORE"); // represents the score
+		score.setBounds(50, 250, 100, 20);
+		window.add(score);
 
-        timer = new JLabel("TIMER");
-        timer.setBounds(250, 250, 100, 20);
-        window.add(timer);
-
-        score = new JLabel("SCORE: 0");
-        score.setBounds(50, 250, 100, 20);
-        window.add(score);
-
-        poll = new JButton("Poll");
-        poll.setBounds(10, 300, 100, 20);
-        poll.addActionListener(this);
-        poll.setEnabled(false);
-        window.add(poll);
-
-        submit = new JButton("Submit");
-        submit.setBounds(200, 300, 100, 20);
-        submit.addActionListener(this);
-        submit.setEnabled(false);  // Disable Submit button initially
-        window.add(submit);
-
-        window.setSize(400, 400);
-        window.setBounds(50, 50, 400, 400);
-        window.setLayout(null);
-        window.setVisible(true);
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window.setResizable(false);
-        
-    }
+		poll = new JButton("Poll");  // button that use clicks/ like a buzzer
+		poll.setBounds(10, 300, 100, 20);
+		poll.addActionListener(this);  // calls actionPerformed of this class
+		window.add(poll);
+		
+		submit = new JButton("Submit");  // button to submit their answer
+		submit.setBounds(200, 300, 100, 20);
+		submit.addActionListener(this);  // calls actionPerformed of this class
+		window.add(submit);
+		
+		
+		window.setSize(400,400);
+		window.setBounds(50, 50, 400, 400);
+		window.setLayout(null);
+		window.setVisible(true);
+		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		window.setResizable(false);
+	}
 
     public void setVisible(boolean visible) {
         window.setVisible(visible); // Delegate visibility to the JFrame
@@ -109,11 +108,21 @@ public class ClientWindow implements ActionListener {
     // Show the given Question object
     public void showQuestion(Question currentQuestion) {
         SwingUtilities.invokeLater(() -> {
+            if (currentQuestion == null) {
+                JOptionPane.showMessageDialog(window, "No question received.");
+                return;
+            }
+
             // Set the question text
             question.setText(currentQuestion.getQuestion());
     
             // Set the options for the question
             String[] optionsArray = currentQuestion.getOptions();
+            if (optionsArray == null || optionsArray.length != options.length) {
+                JOptionPane.showMessageDialog(window, "Invalid options received.");
+                return;
+            }
+
             for (int i = 0; i < options.length; i++) {
                 options[i].setText(optionsArray[i]);
                 options[i].setEnabled(false); // Disable options at the start of the question
@@ -133,9 +142,9 @@ public class ClientWindow implements ActionListener {
 
     private void startPollingTimer() {
         // Cancel any existing timer
-        // if (pollClock != null) {
-        //     pollClock.cancel();
-        // }
+        if (pollClock != null) {
+            pollClock.cancel();
+        }
     
         // Reset the timer display
         timer.setText("5");
