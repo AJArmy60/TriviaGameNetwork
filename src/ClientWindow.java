@@ -161,7 +161,7 @@ public class ClientWindow implements ActionListener {
 
     public void onAckReceived(Boolean ack) {
         // We are now in the answer phase (not the poll phase)
-        if (!pollPhase) {
+        if (!pollPhase && ack) {
             // Polling phase is over, so enable submit button and answer options
             submit.setEnabled(true); // Enable the Submit button
             enableOptions(true); // Enable the options for selection
