@@ -322,7 +322,7 @@ public class Server {
 
             // Start the polling timer (10 seconds for polling)
             System.out.println("Polling phase started...");
-            ServerTimer pollingTimer = new ServerTimer(10, true);
+            ServerTimer pollingTimer = new ServerTimer(15, true);
             pollingTimer.start();
 
             // Process UDP messages
