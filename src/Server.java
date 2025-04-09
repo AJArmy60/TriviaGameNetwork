@@ -55,19 +55,12 @@ public class Server {
                 String message = new String(packet.getData(), 0, packet.getLength()).trim();
                 System.out.println("Received UDP message: " + message);
 
-                // Parse the message (expected format: "buzz:<ClientID>:<QuestionNumber>")
+                // Parse the message (expected format: "buzz:<ClientID>")
                 String[] parts = message.split(":");
-                if (parts.length == 3 && "buzz".equals(parts[0])) {
-                    try {
-                        String clientID = parts[1].trim();
-                        int questionNumber = Integer.parseInt(parts[2].trim());
-
-                        // Add the message to the queue
-                        udpMessageQueue.add(clientID + ":" + questionNumber);
-                        System.out.println("Added to queue: ClientID=" + clientID + ", for QuestionNumber=" + questionNumber);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Invalid question number format in message: " + message);
-                    }
+                if (parts.length == 2 && "buzz".equals(parts[0])) {
+                    String clientID = parts[1].trim(); // Extract only the ClientID
+                    udpMessageQueue.add(clientID); // Add only the ClientID to the queue
+                    System.out.println("Added to queue: ClientID=" + clientID);
                 } else {
                     System.err.println("Invalid UDP message format: " + message);
                 }
@@ -83,24 +76,21 @@ public class Server {
     public static class UDPThread implements Runnable {
         @Override
         public void run() {
-            // Peek at the first message in the queue without removing it
-            String message = udpMessageQueue.poll();
-            String clientID = getClientID(message);
-            ClientHandler clientHandler = connectedClients.get(clientID);
-            if (clientHandler != null) {
-                clientHandler.sendMessage("ack");
-                System.out.println("Sent 'ack' to ClientID=" + clientID);
+            // Get the first ClientID from the queue
+            String clientID = udpMessageQueue.poll();
+            if (clientID == null) {
+                System.err.println("No messages in the UDP queue.");
+                return;
             }
 
-            // sends negative ack to other clients in queue
+            // Send "ack" to the first ClientID
+            ClientHandler.sendMessageToClient(clientID, "ack");
+            System.out.println("Sent 'ack' to ClientID=" + clientID);
+
+            // Send "negative-ack" to the rest of the ClientIDs in the queue
             while (!udpMessageQueue.isEmpty()) {
-                message = udpMessageQueue.poll();
-                clientID = getClientID(message);
-                clientHandler = connectedClients.get(clientID);
-                if (clientHandler != null) {
-                    clientHandler.sendMessage("negative-ack");
-                    System.out.println("Sent 'negative-ack' to ClientID=" + clientID);
-                }
+                clientID = udpMessageQueue.poll();
+                ClientHandler.sendMessageToClient(clientID, "negative-ack");
             }
 
             // Sleep briefly to avoid busy-waiting
@@ -115,11 +105,11 @@ public class Server {
     public static String getClientID(String message) {
         if (message != null) {
             String[] parts = message.split(":");
-            String clientID = parts[0]; // Extract the clientID
-            //int questionNumber = Integer.parseInt(parts[1]); // Extract the question number
-            return clientID;
+            if (parts.length >= 2) {
+                return parts[1].trim(); // Extract the clientID (second part of the message)
+            }
         }
-        return "Failed to parse message";
+        return null; // Return null if the message format is invalid
     }
 
     // Load server configuration from the provided file path
@@ -162,7 +152,7 @@ public class Server {
 
                 clientID = in.readLine();
                 if (clientID == null || clientID.isEmpty()) {
-                    clientID = clientSocket.getInetAddress().toString();
+                                        clientID = clientSocket.getInetAddress().toString();
                 }
 
                 connectedClients.put(clientID, this);
@@ -181,7 +171,7 @@ public class Server {
             } catch (IOException e) {
                 System.err.println("Error handling client: " + e.getMessage());
             } finally {
-                connectedClients.remove(clientID);
+                                connectedClients.remove(clientID);
                 try {
                     clientSocket.close();
                 } catch (IOException e) {
@@ -220,8 +210,25 @@ public class Server {
         
         // Sends a message to this client
         public void sendMessage(String message) {
-            if (out != null) {
-                out.println(message);
+            try {
+                if (objectOut != null) {
+                    objectOut.writeObject(message); // Send the string as a serialized object
+                    objectOut.flush();
+                    System.out.println("Sent message: " + message);
+                }
+            } catch (IOException e) {
+                System.err.println("Error sending message: " + e.getMessage());
+            }
+        }
+
+        // Static method to send a message to a specific ClientID
+        public static void sendMessageToClient(String clientID, String message) {
+                        ClientHandler clientHandler = connectedClients.get(clientID);
+            if (clientHandler != null) {
+                                clientHandler.sendMessage(message); // Use the existing ClientHandler to send the message
+                System.out.println("Sent message to ClientID=" + clientID + ": " + message);
+            } else {
+                System.err.println("No ClientHandler found for ClientID =" + clientID);
             }
         }
 
@@ -263,10 +270,15 @@ public class Server {
                 questionHandler.questionToString();
                 clientHandler.sendQuestion(currentQuestion);
             }
+
             // Start the polling timer (15 seconds for polling)
             System.out.println("Polling phase started...");
             ServerTimer pollingTimer = new ServerTimer(15, true);
             pollingTimer.start();
+
+            // Process UDP messages
+            System.out.println("Processing UDP messages...");
+            new Thread(() -> acceptUDPMessage()).start();
 
             // Wait for polling to finish
             try {
@@ -275,9 +287,10 @@ public class Server {
                 System.err.println("Polling timer interrupted: " + e.getMessage());
             }
 
-            // Process UDP messages
-            System.out.println("Processing UDP messages...");
-            new Thread(() -> acceptUDPMessage()).start();
+
+            //after polling ends process the UDP messages
+            UDPThread udpThread = new UDPThread();
+            udpThread.run();
 
             // Start the answering timer (10 seconds for answering)
             System.out.println("Answering phase started...");

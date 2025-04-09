@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import javax.swing.SwingUtilities;
+
 public class Client {
     private static List<String> SERVER_IPS;
     private static int SERVER_PORT;
@@ -43,11 +45,7 @@ public class Client {
             // Establish a TCP connection to the server
             socket = new Socket(SERVER_IPS.get(0), SERVER_PORT);
             out = new PrintWriter(socket.getOutputStream(), true); // For sending strings
-
-            // Wrap the InputStream with BufferedInputStream to support mark/reset
-            BufferedInputStream bufferedInput = new BufferedInputStream(socket.getInputStream());
-            in = new BufferedReader(new InputStreamReader(bufferedInput)); // For receiving strings
-            objectIn = new ObjectInputStream(bufferedInput); // For receiving objects
+            objectIn = new ObjectInputStream(socket.getInputStream()); // For receiving objects and strings
 
             System.out.println("Connected to server.");
             out.println("Client connected: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort());
@@ -56,27 +54,23 @@ public class Client {
             new Thread(() -> {
                 try {
                     while (true) {
-                        // Peek at the stream to determine if it's an object or a string
-                        if (bufferedInput.available() > 0) {
-                            bufferedInput.mark(1); // Mark the current position in the stream
-                            int typeCode = bufferedInput.read(); // Read the first byte
-                            bufferedInput.reset(); // Reset to the marked position
-
-                            if (typeCode == ObjectStreamConstants.TC_OBJECT) {
-                                // It's an object, read it using ObjectInputStream
-                                Object receivedObject = objectIn.readObject();
-                                if (receivedObject instanceof Question) {
-                                    handleReceivedQuestion((Question) receivedObject);
-                                }
-                            } else {
-                                // It's a string, read it using BufferedReader
-                                String response = in.readLine();
-                                handleServerResponse(response);
-                            }
+                        // Read the incoming object
+                        Object receivedObject = objectIn.readObject();
+                        if (receivedObject instanceof String) {
+                            System.out.println("Received string from server: " + receivedObject); // Debug log
+                            handleServerResponse((String) receivedObject);
+                        } else if (receivedObject instanceof Question) {
+                            handleReceivedQuestion((Question) receivedObject);
+                        } else {
+                            System.err.println("Unknown object type received: " + receivedObject.getClass().getName());
                         }
                     }
-                } catch (IOException | ClassNotFoundException e) {
-                    System.err.println("Error reading server response: " + e.getMessage());
+                } catch (IOException e) {
+                    System.err.println("Error reading server response (IO): " + e.getMessage());
+                } catch (ClassNotFoundException e) {
+                    System.err.println("Error reading server response (ClassNotFound): " + e.getMessage());
+                } catch (Exception e) {
+                    System.err.println("Unexpected error in response thread: " + e.getMessage());
                 }
             }).start();
         } catch (IOException e) {
@@ -85,12 +79,11 @@ public class Client {
     }
 
     //takes accepted question from server and passes it to ClientWindow logic
-    public void handleReceivedQuestion(Question q){
-        // Display the ClientWindow
-        questionHandler.toString();
-        System.out.println("Question receieved");
-        clientWindow.showQuestion(q);
-        q.getCorrectAnswer();
+    public void handleReceivedQuestion(Question q) {
+        SwingUtilities.invokeLater(() -> {
+            System.out.println("Question received");
+            clientWindow.showQuestion(q); // Delegate question display and timer handling to ClientWindow
+        });
     }
 
     //sends answer to server
@@ -108,9 +101,10 @@ public class Client {
     public void sendUDP() {
         try {
             DatagramSocket udpSocket = new DatagramSocket();
-            String clientID = InetAddress.getLocalHost().getHostName(); // Use hostname as ClientID
-            int questionNumber = questionHandler.getCurrentQuestionIndex(); // Get the current question index
-            String message = "buzz:" + clientID + ":" + questionNumber; // Format the message
+
+            // Use only the IP address as the ClientID
+            String clientID = socket.getLocalAddress().getHostAddress();
+            String message = "buzz:" + clientID; // Standardized message format
             byte[] buffer = message.getBytes();
 
             InetAddress serverAddress = InetAddress.getByName(SERVER_IPS.get(0));
@@ -121,6 +115,8 @@ public class Client {
             udpSocket.close();
         } catch (IOException e) {
             System.err.println("Error sending UDP packet: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Unexpected error in sendUDP: " + e.getMessage());
         }
     }
 
@@ -138,6 +134,8 @@ public class Client {
         } else if (response.equals("game-started!")) {
             clientWindow.enablePollButton();
             System.out.println("Game started! Poll button enabled.");
+
+        //handle score
         } else if (response.equals("CORRECT")) {
             clientWindow.updateScore(10);
         } else if (response.equals("INCORRECT")) {
